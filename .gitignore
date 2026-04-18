@@ -1,2 +1,5 @@
 /hf-env/*
 .env
+/data/*
+/models/*
+*.pyc
