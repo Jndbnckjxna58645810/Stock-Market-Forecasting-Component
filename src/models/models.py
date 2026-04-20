@@ -1,6 +1,6 @@
 import joblib
 
-from src.data_loader import MODELS_DIR
+from src.config import *
 
 def save_model(model, name):
     path = MODELS_DIR / f"{name}.pkl"
