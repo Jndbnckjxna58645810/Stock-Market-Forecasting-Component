@@ -1,6 +1,6 @@
 import yfinance as yf
 
-from src.config import RAW_DATA_DIR
+from src.config.config import RAW_DATA_DIR
 from src.data.loader import load_csv, save_csv
 from src.preprocessing.preprocessing import normalize_df
 

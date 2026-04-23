@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 import re
 
-from src.config import *
+from src.config.config import *
 
 def get_versions(base_name, directory):
     existing_files = list(directory.glob(f"{base_name}_v*.csv"))

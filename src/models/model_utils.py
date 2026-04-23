@@ -1,6 +1,6 @@
 import joblib
 
-from src.config import *
+from config.config import *
 
 def save_model(model, name):
     path = MODELS_DIR / f"{name}.pkl"

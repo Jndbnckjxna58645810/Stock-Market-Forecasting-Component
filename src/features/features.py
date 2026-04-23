@@ -3,7 +3,7 @@ import numpy as np
 
 from src.preprocessing.preprocessing import *
 from src.data.loader import *
-from src.config import *
+from src.config.config import *
 
 def ema(df, window=20): return df["close"].ewm(span=window).mean()
 
