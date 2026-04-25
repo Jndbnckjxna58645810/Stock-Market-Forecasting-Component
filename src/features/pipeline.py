@@ -6,18 +6,27 @@ FEATURE_FUNCTIONS = {
 }
 
 def apply_features(df, features):
-    for name, params in features:
-        func = FEATURE_FUNCTIONS[name]
+    for feature in features:
+        name = feature["name"]
+        params = feature.get("params", {})
+        custom_name = feature.get("col_name")
 
+        func = FEATURE_FUNCTIONS[name]
         result = func(df, **params)
 
         if isinstance(result, tuple):
             for i, col in enumerate(result):
-                df[f"{name}_{i}"] = col
+                col_name = (
+                    custom_name[i]
+                    if isinstance(custom_name, list)
+                    else f"{name}_{i}"
+                )
+                df[col_name] = col
         else:
-            suffix = "_".join(str(v) for v in params.values()) if params else ""
-            col_name = f"{name}_{suffix}" if suffix else name
-
+            if custom_name: col_name = custom_name
+            else:
+                suffix = "_".join(str(v) for v in params.values()) if params else ""
+                col_name = f"{name}_{suffix}" if suffix else name
             df[col_name] = result
-
+            
     return df

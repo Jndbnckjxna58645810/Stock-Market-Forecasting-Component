@@ -3,7 +3,7 @@ import pandas as pd
 from fredapi import Fred
 
 from src.config.config import FRED_API_KEY, RAW_DATA_DIR
-from src.data.loader import load_csv, save_csv, get_next_version, get_versions
+from src.data.loader import load_csv, save_csv
 
 def get_fred(): return Fred(api_key=FRED_API_KEY)
 

@@ -1,7 +1,6 @@
 import pandas as pd
 
 def normalize_df(df, ticker=None):
-    # Handle MultiIndex columns
     if isinstance(df.columns, pd.MultiIndex):
         if ticker: df = df.xs(ticker, axis=1, level=1)
         else: df.columns = df.columns.get_level_values(0)
