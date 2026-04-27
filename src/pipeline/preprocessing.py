@@ -23,3 +23,14 @@ def handle_macro(df):
     return df.reindex(pd.date_range(start=df.index.min(), end=df.index.max(), freq='D')).ffill()
 
 def merge_df(df_t, df_m): return handle_missing(df_t.join(handle_macro(df_m)), "ffill")
+
+def get_max_lookback(features):
+    max_lookback = 0
+
+    for f in features:
+        params = f.get("params", {})
+        for v in params.values():
+            if isinstance(v, int):
+                max_lookback = max(max_lookback, v)
+
+    return max_lookback

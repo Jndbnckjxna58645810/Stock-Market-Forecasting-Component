@@ -1,9 +1,4 @@
-import pandas as pd
 import numpy as np
-
-from src.preprocessing.preprocessing import *
-from src.data.loader import *
-from src.config.config import *
 
 def ema(df, window=20): return df["close"].ewm(span=window).mean()
 
@@ -39,4 +34,34 @@ def bband_lower(df, window=20): return sma(df, window) - 2 * volatility(df, wind
 
 def lag(df, n=1): return df["close"].shift(n)
 
-def return_lag(df): return df["close"].pct_change().shift(1)
+def return_lag(df, n=1): return df["close"].pct_change().shift(n)
+
+def range_feature(df): return (df["high"] - df["low"]) / df["close"]
+
+def volume_change(df): return df["volume"].pct_change()
+
+def hl_position(df): return (df["close"] - df["low"]) / (df["high"] - df["low"])
+
+def body(df): return (df["close"] - df["open"]) / df["open"]
+
+def volatility_ratio(df): return volatility(df) / df["close"]
+
+def volume_sma(df, window=10): return df["volume"].rolling(window).mean()
+
+def volume_ratio(df): return df["volume"] / volume_sma(df)
+
+def dist_sma(df, window=20):
+    sma_window = sma(df, window)
+    return (df["close"] - sma_window) / sma_window
+
+def macd_hist(df):
+    macd_line, signal = macd(df)
+    return macd_line - signal
+
+def rolling_max(df, window=10): return df["high"].rolling(window).max()
+
+def rolling_min(df, window=10): return df["low"].rolling(window).max()
+
+def breakout_up(df): return (df["close"] > rolling_max(df)).astype(int)
+
+def breakout_down(df): return (df["close"] > rolling_min(df)).astype(int)

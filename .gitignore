@@ -1,7 +1,8 @@
 /hf-env/*
 .env
 /data/*
-/models/*
 *.pyc
 /__pycache__/*
-/runs/*
+/config/*
+/.vscode/*
+/models/*
