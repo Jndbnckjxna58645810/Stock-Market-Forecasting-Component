@@ -65,3 +65,11 @@ def rolling_min(df, window=10): return df["low"].rolling(window).max()
 def breakout_up(df): return (df["close"] > rolling_max(df)).astype(int)
 
 def breakout_down(df): return (df["close"] > rolling_min(df)).astype(int)
+
+def log_return(df, n=1): return np.log(df["close"] / df["close"].shift(n))
+
+def day_of_week_feature(df): return df.index.dayofweek
+
+def month_feature(df): return df.index.month
+
+def zscore_close(df, window=50): return (df["close"] - df["close"].rolling(window).mean()) / df["close"].rolling(window).std()

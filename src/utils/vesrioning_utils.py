@@ -1,4 +1,10 @@
 import re
+import hashlib
+import json
+
+def make_signature(config):
+    s = json.dumps(config, sort_keys=True)
+    return hashlib.md5(s.encode()).hexdigest()[:8]
 
 def get_versions(base_name, directory, extension="csv"):
     existing_files = list(directory.glob(f"{base_name}_v*.{extension}"))

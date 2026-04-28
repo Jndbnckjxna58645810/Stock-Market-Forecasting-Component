@@ -1,29 +1,28 @@
+import pandas as pd
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
-from src.pipeline.build_dataset import build_dataset_from_run
+from src.pipeline.build_dataset import build_dataset
+
 from src.models.build_model import build_model
+from src.models.apply_targets import apply_target
 
 from src.utils.model_utils import save_model
 from src.utils.config_utils import load_run_config, load_model_config
 
-def add_target(df, target_config):
-    h = target_config["horizon"]
-    df["target"] = df["close"].pct_change(h).shift(-h)
-    return df
-
-def train(run_config_path):
-    run_config = load_run_config(run_config_path)
+def train(run):
+    run_config = load_run_config(run)
     model_config = load_model_config(run_config["model_config"])
 
-    df = build_dataset_from_run(run_config_path)
+    df = build_dataset(run)
 
-    df["target"] = df["close"].pct_change().shift(-1)
+    df, target_cols = apply_target(df, model_config["target"])
     df = df.dropna()
 
-    X = df.drop(columns=["target"])
-    y = df["target"]
+    X = df.drop(columns=target_cols)
+    y = df[target_cols]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
 
@@ -38,5 +37,11 @@ def train(run_config_path):
 
     print("R2:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
+
+    importances = model.feature_importances_
+
+    feat_importance = pd.Series(importances, index=X.columns)
+    feat_importance = feat_importance.sort_values(ascending=False)
+    print(feat_importance)
 
     save_model(model, model_config, X.columns)
