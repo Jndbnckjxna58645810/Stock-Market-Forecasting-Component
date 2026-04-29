@@ -1,6 +1,6 @@
 from src.features.features import *
 
-from src.utils.config_utils import load_run_config, load_model_config
+from src.utils.config_utils import ensure_run_config, load_model_config
 
 from src.config.run_config import RunConfig
 
@@ -19,6 +19,7 @@ FEATURE_FUNCTIONS = {
 }
 
 def apply_features(df, run : RunConfig):
+    run = ensure_run_config(run)
     features = load_model_config(run.model_config_path).features
     for feature in features:
         name = feature["name"]

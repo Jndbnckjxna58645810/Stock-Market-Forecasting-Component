@@ -1,10 +1,11 @@
 import pandas as pd
 
-from src.utils.config_utils import load_run_config, load_model_config
+from src.utils.config_utils import ensure_run_config, load_model_config
 
 from src.config.run_config import RunConfig
 
-def normalize_df(df, run : RunConfig):
+def normalize_df(df, run: RunConfig):
+    run = ensure_run_config(run)
     ticker = run.ticker
     if isinstance(df.columns, pd.MultiIndex):
         if ticker: df = df.xs(ticker, axis=1, level=1)
@@ -27,9 +28,12 @@ def handle_macro(df):
     df.index = pd.to_datetime(df.index)
     return df.reindex(pd.date_range(start=df.index.min(), end=df.index.max(), freq='D')).ffill()
 
-def merge_df(df_t, df_m): return handle_missing(df_t.join(handle_macro(df_m)), "ffill")
+def merge_df(df_t, df_m):
+    if df_m.empty: return df_t
+    return handle_missing(df_t.join(handle_macro(df_m)), "ffill")
 
-def get_max_lookback(run : RunConfig):
+def get_max_lookback(run: RunConfig):
+    run = ensure_run_config(run)
     features = load_model_config(run.model_config_path).features
     max_lookback = 0
 

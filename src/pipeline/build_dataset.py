@@ -4,18 +4,22 @@ from src.data.technical import load_technical
 from src.data.macro import load_macro
 
 from src.utils.csv_utils import save_processed_csv, load_processed_csv
+from src.utils.config_utils import ensure_run_config
 
 from src.pipeline.apply_features import apply_features
 from src.pipeline.preprocessing import merge_df, handle_missing
 
 from src.config.run_config import RunConfig
 
-def load_dataset(run : RunConfig):
+def load_dataset(run: RunConfig):
+    run = ensure_run_config(run)
     if not run.data_config["processed"]["force_download"]:
         try: return load_processed_csv(run)
         except FileNotFoundError: return pd.DataFrame()
 
-def build_dataset(run : RunConfig, input_date=None):
+def build_dataset(run: RunConfig, input_date=None):
+    run = ensure_run_config(run)
+
     loaded = load_dataset(run)
     if input_date == None and not loaded.empty: return loaded
 
