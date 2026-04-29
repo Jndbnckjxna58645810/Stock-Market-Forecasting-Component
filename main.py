@@ -1,6 +1,4 @@
 from src.models.train import train
-from src.pipeline.build_dataset import build_dataset
+from src.utils.config_utils import load_run_config
 
-train("xgb_GOOGL_2010-01-01_2025-01-01_1d.json")
-train("xgb_AAPL_2005-01-01_2025-01-01_1d.json")
- 
+train(load_run_config("xgb_AAPL_2005-01-01_2025-01-01_1d.json"))

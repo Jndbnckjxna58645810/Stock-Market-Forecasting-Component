@@ -2,8 +2,10 @@ import pandas as pd
 
 from src.utils.config_utils import load_run_config, load_model_config
 
-def normalize_df(df, run):
-    ticker = load_run_config(run)["ticker"]
+from src.config.run_config import RunConfig
+
+def normalize_df(df, run : RunConfig):
+    ticker = run.ticker
     if isinstance(df.columns, pd.MultiIndex):
         if ticker: df = df.xs(ticker, axis=1, level=1)
         else: df.columns = df.columns.get_level_values(0)
@@ -27,8 +29,8 @@ def handle_macro(df):
 
 def merge_df(df_t, df_m): return handle_missing(df_t.join(handle_macro(df_m)), "ffill")
 
-def get_max_lookback(run):
-    features = load_model_config(load_run_config(run)["model_config"])["features"]
+def get_max_lookback(run : RunConfig):
+    features = load_model_config(run.model_config_path).features
     max_lookback = 0
 
     for f in features:

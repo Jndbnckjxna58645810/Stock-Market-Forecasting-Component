@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.config.config import DATA_DIR
+from src.settings.config import DATA_DIR
 
 def resolve_path(path, base_dir=DATA_DIR):
     path = Path(path)

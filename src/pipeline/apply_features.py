@@ -2,6 +2,8 @@ from src.features.features import *
 
 from src.utils.config_utils import load_run_config, load_model_config
 
+from src.config.run_config import RunConfig
+
 FEATURE_FUNCTIONS = {
     "sma": sma, "ema": ema, "momentum": momentum,
     "volatility": volatility, "volatility_ratio" : volatility_ratio,
@@ -16,8 +18,8 @@ FEATURE_FUNCTIONS = {
     "day_of_week" : day_of_week_feature, "month" : month_feature
 }
 
-def apply_features(df, run):
-    features = load_model_config(load_run_config(run)["model_config"])["features"]
+def apply_features(df, run : RunConfig):
+    features = load_model_config(run.model_config_path).features
     for feature in features:
         name = feature["name"]
         params = feature.get("params", {})
@@ -42,18 +44,3 @@ def apply_features(df, run):
             df[col_name] = result
             
     return df
-
-def get_feature_names(features_config):
-    names = []
-    for f in features_config:
-        name = f["name"]
-        params = f.get("params", {})
-
-        if "window" in params:
-            names.append(f"{name}_{params['window']}")
-        elif "n" in params:
-            names.append(f"{name}_{params['n']}")
-        else:
-            names.append(name)
-
-    return names

@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
@@ -12,36 +13,48 @@ from src.models.apply_targets import apply_target
 from src.utils.model_utils import save_model
 from src.utils.config_utils import load_run_config, load_model_config
 
-def train(run):
-    run_config = load_run_config(run)
-    model_config = load_model_config(run_config["model_config"])
+from src.config.run_config import RunConfig
+
+def train(run : RunConfig):
+    model_config = load_model_config(run.model_config_path)
 
     df = build_dataset(run)
 
-    df, target_cols = apply_target(df, model_config["target"])
+    df, target_cols = apply_target(df, run)
     df = df.dropna()
 
     X = df.drop(columns=target_cols)
     y = df[target_cols]
 
+    corr = df.corr().abs()
+    upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
+    to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
+    df = df.drop(columns=to_drop)
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
 
+    # 1. Prepare data (Scaling with column recovery)
     scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
+    X_train_df = pd.DataFrame(scaler.fit_transform(X_train), index=X_train.index, columns=X_train.columns)
+    X_test_df = pd.DataFrame(scaler.transform(X_test), index=X_test.index, columns=X_test.columns)
 
-    model = build_model(model_config)
-    model.fit(X_train, y_train)
+    # 2. Build and train baseline
+    model = build_model(run)
+    model.fit(X_train_df, y_train)
 
-    preds = model.predict(X_test)
+    # 3. Feature Selection
+    importances = pd.Series(model.feature_importances_, index=X_train_df.columns).sort_values(ascending=False)
+    k = int(len(importances) * 0.8)
+    selected = importances.iloc[:k].index.tolist()
+
+    # 4. Final Train
+    model.fit(X_train_df[selected], y_train)
+    preds = model.predict(X_test_df[selected])
 
     print("R2:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
+    print(X_test_df[selected].columns)
+    importances = pd.Series(model.feature_importances_, index=X_train_df[selected].columns).sort_values(ascending=False)
+    print(importances)
 
-    importances = model.feature_importances_
-
-    feat_importance = pd.Series(importances, index=X.columns)
-    feat_importance = feat_importance.sort_values(ascending=False)
-    print(feat_importance)
-
-    save_model(model, model_config, X.columns)
+    save_model(model, model_config, X_test_df[selected].columns)

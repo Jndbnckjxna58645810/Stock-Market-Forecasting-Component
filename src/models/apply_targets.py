@@ -1,11 +1,17 @@
 from src.features.targets import *
 
+from src.config.run_config import RunConfig
+
+from src.utils.config_utils import load_model_config, load_run_config
+
 TARGET_FUNCTIONS = {
     "return": target_return, "direction": target_direction,
     "price": target_price, "multi_return": target_multi_return
 }
 
-def apply_target(df, target_config):
+def apply_target(df, run : RunConfig):
+    target_config = load_model_config(run.model_config_path).target
+
     name = target_config["name"]
     params = target_config.get("params", {})
 
