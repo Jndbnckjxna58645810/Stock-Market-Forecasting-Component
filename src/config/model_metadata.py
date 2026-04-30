@@ -23,7 +23,7 @@ class ModelMetadata(BaseConfig):
     def interval(self): return self._data["interval"]
 
     @property
-    def split(self): return self._data.get("split", {})
+    def split(self): return self._data["split"]
 
     @property
     def features(self): return self._data["features"]

@@ -35,11 +35,13 @@ def load_macro_by_parameters(macro_features, features, start_date, end_date, for
     if save_macro: save_csv(df, default_path if path == None else path)
     return df
 
-def load_macro_dataset(run: TrainConfig):
+def load_macro_dataset(run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
+    if model_config == None:
+        model_config = ModelConfig.from_name(run.model_config_path)
+    
     return load_macro_by_parameters(
-        ModelConfig.from_name(run.model_config_path).macro_features,
-        ModelConfig.from_name(run.model_config_path).features,
+        model_config.macro_features, model_config.features,
         run.start_date, run.end_date,
         save_macro=run.data_config["macro"]["save"],
         force_download=run.data_config["macro"]["force_download"],
@@ -47,9 +49,10 @@ def load_macro_dataset(run: TrainConfig):
 
 def load_macro_input(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
-    metadata = ModelMetadata.from_name(predict_config.model_path)
+    model_metadata = ModelMetadata.from_name(predict_config.model_path)
+
     return load_macro_by_parameters(
-        metadata.macro_features, metadata.features,
+        model_metadata.macro_features, model_metadata.features,
         pd.to_datetime(predict_config.input_date) - pd.DateOffset(days=5),
         pd.to_datetime(predict_config.input_date) + pd.DateOffset(days=1),
         save_macro=False, force_download=True, path=None)
@@ -57,6 +60,7 @@ def load_macro_input(predict_config: PredictConfig):
 def load_macro_evaluation_dataset(evaluate_config: EvaluateConfig, model_metadata: ModelMetadata):
     evaluate_config = ensure(evaluate_config, EvaluateConfig)
     model_metadata = ensure(model_metadata, ModelMetadata)
+    
     return load_macro_by_parameters(
         model_metadata.macro_features,
         model_metadata.features,

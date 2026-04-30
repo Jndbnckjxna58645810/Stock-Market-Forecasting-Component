@@ -16,30 +16,37 @@ from src.config.model_config import ModelConfig
 
 def train_xgb(run: TrainConfig, model_config: ModelConfig):
     run = ensure(run, TrainConfig)
-    df = build_dataset(run)
+    if model_config == None:
+        if run.model_config_path == None: raise ValueError("Training requires model_config")
+        model_config = ModelConfig.from_name(run.model_config_path)
+    
+    df = build_dataset(run, model_config)
 
-    df, target_cols = apply_target_to_dataset(df, run)
+    df, target_cols = apply_target_to_dataset(df, run, model_config)
     df = df.dropna()
-
-    corr = df.corr().abs()
-    upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
-    to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
-    df = df.drop(columns=to_drop)
-
-    X = df.drop(columns=target_cols)
-    y = df[target_cols]
 
     train_end = run.split["train_end"]
     val_end = run.split["val_end"]
 
-    X_train = X.loc[:train_end].iloc[:-1]
-    y_train = y.loc[:train_end].iloc[:-1]
+    X = df.drop(columns=target_cols)
+    y = df[target_cols]
 
-    X_val = X.loc[train_end:val_end].iloc[:-1]
-    y_val = y.loc[train_end:val_end].iloc[:-1]
+    X_train = X.loc[:train_end]
+    y_train = y.loc[:train_end]
 
-    X_test = X.loc[val_end:]
-    y_test = y.loc[val_end:]
+    X_val = X.loc[train_end:val_end].iloc[1:]
+    y_val = y.loc[train_end:val_end].iloc[1:]
+
+    X_test = X.loc[val_end:].iloc[1:]
+    y_test = y.loc[val_end:].iloc[1:]
+
+    corr = X_train.corr().abs()
+    upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
+    to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
+
+    X_train = X_train.drop(columns=to_drop)
+    X_val   = X_val.drop(columns=to_drop, errors="ignore")
+    X_test  = X_test.drop(columns=to_drop, errors="ignore")
 
     import xgboost as xgb
     model = xgb.XGBRegressor(**model_config.model["params"])
@@ -58,6 +65,8 @@ def train_xgb(run: TrainConfig, model_config: ModelConfig):
 
     preds = model.predict(X_test[selected])
 
+    baseline = np.zeros_like(y_test)
+    print("Baseline MSE:", mean_squared_error(y_test, baseline))
     print("R2:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
 

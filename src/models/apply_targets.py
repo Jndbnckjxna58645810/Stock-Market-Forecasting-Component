@@ -31,9 +31,11 @@ def apply_target_by_parameters(df, target_config):
 
     return df, target_cols
 
-def apply_target_to_dataset(df, run: TrainConfig):
+def apply_target_to_dataset(df, run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
-    df, target_cols = apply_target_by_parameters(df, ModelConfig.from_name(run.model_config_path).target)
+    if model_config == None:
+        model_config = ModelConfig.from_name(run.model_config_path)
+    df, target_cols = apply_target_by_parameters(df, model_config.target)
     return df, target_cols
 
 def apply_target_to_evaluation_dataset(df, model_metadata: ModelMetadata):

@@ -7,9 +7,11 @@ from src.models.train_models.train_xgb import train_xgb
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
-def train(run: TrainConfig, model_config: ModelConfig):
+def train(run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
-    if run.model_config_path == None: raise ValueError("Training requires model_config")
+    if model_config == None:
+        if run.model_config_path == None: raise ValueError("Training requires model_config")
+        model_config = ModelConfig.from_name(run.model_config_path)
     model_config = ensure(model_config, ModelConfig)
 
     model_name = model_config.model["name"]

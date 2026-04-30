@@ -31,6 +31,7 @@ def load_technical_dataset(run: TrainConfig):
 def load_technical_input(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
     model_metadata = ModelMetadata.from_name(predict_config.model_path)
+
     return load_technical_by_parameters(
         model_metadata.ticker,
         pd.to_datetime(predict_config.input_date) - pd.DateOffset(

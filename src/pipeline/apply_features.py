@@ -47,9 +47,11 @@ def apply_features_by_parameters(df, features):
             
     return df
 
-def apply_features_to_dataset(df, run: TrainConfig):
+def apply_features_to_dataset(df, run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
-    return apply_features_by_parameters(df, ModelConfig.from_name(run.model_config_path).features)
+    if model_config == None:
+        model_config = ModelConfig.from_name(run.model_config_path)
+    return apply_features_by_parameters(df, model_config.features)
 
 def apply_features_to_input(df, predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
