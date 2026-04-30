@@ -19,8 +19,9 @@ CONFIG_DIR = BASE_DIR / "config"
 
 MODELS_DIR = BASE_DIR / "models"
 MODELS_CONFIG_DIR = CONFIG_DIR / "models"
-RUN_CONFIG_DIR = CONFIG_DIR / "runs"
+RUN_CONFIG_DIR = CONFIG_DIR / "train"
 PREDICTION_CONFIG_DIR = CONFIG_DIR / "predictions"
+EVALUATE_CONFIG_DIR = CONFIG_DIR / "evaluate"
 
 logging.basicConfig(
     filename=BASE_DIR / "logs/app.log",

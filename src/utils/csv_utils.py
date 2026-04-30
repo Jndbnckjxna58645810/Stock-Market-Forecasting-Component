@@ -4,7 +4,7 @@ from src.settings.config import *
 from src.utils.vesrioning_utils import make_signature
 from src.utils.path_utils import resolve_path
 
-from src.config.run_config import RunConfig
+from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
 def save_csv(df, path):
@@ -14,7 +14,7 @@ def save_csv(df, path):
     return path
 
 def save_processed_csv(df, run):
-    if not isinstance(run, RunConfig): run = RunConfig.from_name(run)
+    if not isinstance(run, TrainConfig): run = TrainConfig.from_name(run)
 
     t = run.ticker
     s, e = run.start_date, run.end_date
@@ -30,7 +30,7 @@ def save_processed_csv(df, run):
 
 def load_csv(path): return pd.read_csv(resolve_path(path), index_col=0, parse_dates=True)
 
-def load_processed_csv(run : RunConfig):
+def load_processed_csv(run : TrainConfig):
     t = run.ticker
     s, e = run.start_date, run.end_date
     i = run.interval

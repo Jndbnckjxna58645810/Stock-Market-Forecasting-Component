@@ -2,18 +2,16 @@ from src.features.targets import *
 
 from src.utils.config_utils import ensure
 
-from src.config.run_config import RunConfig
+from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
+from src.config.model_metadata import ModelMetadata
 
 TARGET_FUNCTIONS = {
     "return": target_return, "direction": target_direction,
     "price": target_price, "multi_return": target_multi_return
 }
 
-def apply_target(df, run : RunConfig):
-    run = ensure(run, RunConfig)
-    target_config = ModelConfig.from_name(run.model_config_path).target
-
+def apply_target_by_parameters(df, target_config):
     name = target_config["name"]
     params = target_config.get("params", {})
 
@@ -31,4 +29,14 @@ def apply_target(df, run : RunConfig):
         df[col_name] = result
         target_cols.append(col_name)
 
+    return df, target_cols
+
+def apply_target_to_dataset(df, run: TrainConfig):
+    run = ensure(run, TrainConfig)
+    df, target_cols = apply_target_by_parameters(df, ModelConfig.from_name(run.model_config_path).target)
+    return df, target_cols
+
+def apply_target_to_evaluation_dataset(df, model_metadata: ModelMetadata):
+    model_metadata = ensure(model_metadata, ModelMetadata)
+    df, target_cols = apply_target_by_parameters(df, model_metadata.target)
     return df, target_cols

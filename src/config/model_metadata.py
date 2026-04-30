@@ -6,15 +6,24 @@ class ModelMetadata(BaseConfig):
     CLASS_DIR = MODELS_DIR
 
     @classmethod
-    def from_name(cls, model_id):
-        path = MODELS_DIR / model_id / "metadata.json"
+    def from_name(cls, model_path):
+        path = MODELS_DIR / model_path / "metadata.json"
         return cls.from_file(path)
 
     @property
     def ticker(self): return self._data["ticker"]
 
     @property
+    def start_date(self): return self._data["start_date"]
+
+    @property
+    def end_date(self): return self._data["end_date"]
+
+    @property
     def interval(self): return self._data["interval"]
+
+    @property
+    def split(self): return self._data.get("split", {})
 
     @property
     def features(self): return self._data["features"]

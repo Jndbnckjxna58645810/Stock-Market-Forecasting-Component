@@ -3,20 +3,19 @@ import json
 
 from src.settings.config import *
 
-from src.config.run_config import RunConfig
+from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
-from src.config.predict_config import PredictConfig
 
 from src.utils.config_utils import ensure
 
-from src.config.run_config import RunConfig
+from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
 def save_json(data, path):
     with open(path, "w") as f: json.dump(data, f, indent=4, default=str)
 
-def save_model(model, metadata, run: RunConfig, model_config: ModelConfig):
-    run = ensure(run, RunConfig)
+def save_model(model, metadata, run: TrainConfig, model_config: ModelConfig):
+    run = ensure(run, TrainConfig)
     model_config = ensure(model_config, ModelConfig)
 
     m, t, i = metadata["model"]["name"], metadata["ticker"], metadata["interval"]
@@ -30,6 +29,5 @@ def save_model(model, metadata, run: RunConfig, model_config: ModelConfig):
 
     return directory
 
-def load_model(predict_config: PredictConfig):
-    predict_config = ensure(predict_config, PredictConfig)
-    return joblib.load(MODELS_DIR / f"{predict_config.model_path}" / "model.pkl")
+def load_model(model_path):
+    return joblib.load(MODELS_DIR / f"{model_path}" / "model.pkl")

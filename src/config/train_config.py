@@ -1,9 +1,9 @@
 from src.config.base_config import BaseConfig
 from src.settings.config import RUN_CONFIG_DIR
 
-class RunConfig(BaseConfig):
+class TrainConfig(BaseConfig):
     CLASS_DIR = RUN_CONFIG_DIR
-    
+
     @property
     def ticker(self): return self._data["ticker"]
 
@@ -15,6 +15,9 @@ class RunConfig(BaseConfig):
 
     @property
     def interval(self): return self._data["interval"]
+
+    @property
+    def split(self): return self._data.get("split", {})
 
     @property
     def data_config(self): return self._data.get("data", {})

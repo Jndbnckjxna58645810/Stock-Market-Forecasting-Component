@@ -8,10 +8,11 @@ from src.utils.csv_utils import load_csv, save_csv
 from src.utils.config_utils import ensure
 from src.utils.vesrioning_utils import make_signature
 
-from src.config.run_config import RunConfig
+from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 from src.config.predict_config import PredictConfig
 from src.config.model_metadata import ModelMetadata
+from src.config.evaluate_config import EvaluateConfig
 
 def get_fred(): return Fred(api_key=FRED_API_KEY)
 
@@ -34,15 +35,15 @@ def load_macro_by_parameters(macro_features, features, start_date, end_date, for
     if save_macro: save_csv(df, default_path if path == None else path)
     return df
 
-def load_macro_dataset(run: RunConfig):
-    run = ensure(run, RunConfig)
+def load_macro_dataset(run: TrainConfig):
+    run = ensure(run, TrainConfig)
     return load_macro_by_parameters(
         ModelConfig.from_name(run.model_config_path).macro_features,
         ModelConfig.from_name(run.model_config_path).features,
         run.start_date, run.end_date,
-        save_technical=run.data_config["macro"]["save"],
+        save_macro=run.data_config["macro"]["save"],
         force_download=run.data_config["macro"]["force_download"],
-        path=run.data_config["macro"]["path"]).loc[run.start_date:]
+        path=run.data_config["macro"]["path"])
 
 def load_macro_input(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
@@ -51,4 +52,13 @@ def load_macro_input(predict_config: PredictConfig):
         metadata.macro_features, metadata.features,
         pd.to_datetime(predict_config.input_date) - pd.DateOffset(days=5),
         pd.to_datetime(predict_config.input_date) + pd.DateOffset(days=1),
+        save_macro=False, force_download=True, path=None)
+
+def load_macro_evaluation_dataset(evaluate_config: EvaluateConfig, model_metadata: ModelMetadata):
+    evaluate_config = ensure(evaluate_config, EvaluateConfig)
+    model_metadata = ensure(model_metadata, ModelMetadata)
+    return load_macro_by_parameters(
+        model_metadata.macro_features,
+        model_metadata.features,
+        evaluate_config.start_date, evaluate_config.end_date,
         save_macro=False, force_download=True, path=None)

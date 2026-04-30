@@ -9,6 +9,11 @@ from src.config.model_metadata import ModelMetadata
 def predict(predict_config):
     predict_config = ensure(predict_config, PredictConfig)
 
-    return load_model(predict_config).predict(
-        build_input(predict_config)[ModelMetadata.from_name(
-            predict_config.model_path).selected_features])
+    bundle = load_model(predict_config.model_path)
+    model, scaler = bundle.get("model"), bundle.get("scaler")
+
+    X = build_input(predict_config)[ModelMetadata.from_name(
+            predict_config.model_path).selected_features]
+    if scaler != None: X = scaler.transform(X)
+
+    return model.predict(X)

@@ -4,11 +4,11 @@ from src.models.train_models.train_lstm import train_lstm
 from src.models.train_models.train_rf import train_rf
 from src.models.train_models.train_xgb import train_xgb
 
-from src.config.run_config import RunConfig
+from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
-def train(run: RunConfig, model_config: ModelConfig):
-    run = ensure(run, RunConfig)
+def train(run: TrainConfig, model_config: ModelConfig):
+    run = ensure(run, TrainConfig)
     if run.model_config_path == None: raise ValueError("Training requires model_config")
     model_config = ensure(model_config, ModelConfig)
 

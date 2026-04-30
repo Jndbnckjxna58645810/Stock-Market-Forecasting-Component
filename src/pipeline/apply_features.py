@@ -2,7 +2,7 @@ from src.features.features import *
 
 from src.utils.config_utils import ensure
 
-from src.config.run_config import RunConfig
+from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 from src.config.predict_config import PredictConfig
 from src.config.model_metadata import ModelMetadata
@@ -47,10 +47,14 @@ def apply_features_by_parameters(df, features):
             
     return df
 
-def apply_features_to_dataset(df, run: RunConfig):
-    run = ensure(run, RunConfig)
+def apply_features_to_dataset(df, run: TrainConfig):
+    run = ensure(run, TrainConfig)
     return apply_features_by_parameters(df, ModelConfig.from_name(run.model_config_path).features)
 
 def apply_features_to_input(df, predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
     return apply_features_by_parameters(df, ModelMetadata.from_name(predict_config.model_path).features)
+
+def apply_features_to_evaluation_dataset(df, model_metadata: ModelMetadata):
+    model_metadata = ensure(model_metadata, ModelMetadata)
+    return apply_features_by_parameters(df, model_metadata.features)
