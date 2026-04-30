@@ -1,36 +1,49 @@
 import pandas as pd
+import datetime as dt
 
-from src.data.technical import load_technical
-from src.data.macro import load_macro
+from src.data.technical import load_technical_dataset, load_technical_input
+from src.data.macro import load_macro_dataset, load_macro_input
 
 from src.utils.csv_utils import save_processed_csv, load_processed_csv
-from src.utils.config_utils import ensure_run_config
+from src.utils.config_utils import ensure
 
-from src.pipeline.apply_features import apply_features
+from src.pipeline.apply_features import apply_features_to_dataset, apply_features_to_input
 from src.pipeline.preprocessing import merge_df, handle_missing
 
 from src.config.run_config import RunConfig
+from src.config.predict_config import PredictConfig
 
 def load_dataset(run: RunConfig):
-    run = ensure_run_config(run)
+    run = ensure(run, RunConfig)
     if not run.data_config["processed"]["force_download"]:
         try: return load_processed_csv(run)
         except FileNotFoundError: return pd.DataFrame()
 
-def build_dataset(run: RunConfig, input_date=None):
-    run = ensure_run_config(run)
+def build_dataset(run: RunConfig):
+    run = ensure(run, RunConfig)
 
     loaded = load_dataset(run)
-    if input_date == None and not loaded.empty: return loaded
+    if not run.data_config["processed"]["force_download"] or not loaded.empty: return loaded
 
-    technical = load_technical(run, input_date=input_date)
-    macro = load_macro(run, input_date=input_date)
+    technical = load_technical_dataset(run)
+    macro = load_macro_dataset(run)
 
     df = merge_df(technical, macro)
-    df = apply_features(df, run)
+    df = apply_features_to_dataset(df, run)
     df = handle_missing(df, method="ffill")
     df = handle_missing(df, "drop")
 
-    if input_date == None: save_processed_csv(df, run)
+    save_processed_csv(df, run)
+    return df
 
-    return df if input_date == None else df.iloc[-1:]
+def build_input(predict_config: PredictConfig):
+    predict_config = ensure(predict_config, PredictConfig)
+
+    technical = load_technical_input(predict_config)
+    macro = load_macro_input(predict_config)
+
+    df = merge_df(technical, macro)
+    df = apply_features_to_input(df, predict_config)
+    df = handle_missing(df, method="ffill")
+
+    return df.loc[predict_config.input_date:].iloc[0:1]

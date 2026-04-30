@@ -1,6 +1,15 @@
 from src.config.base_config import BaseConfig
 
+from src.settings.config import MODELS_DIR
+
 class ModelMetadata(BaseConfig):
+    CLASS_DIR = MODELS_DIR
+
+    @classmethod
+    def from_name(cls, model_id):
+        path = MODELS_DIR / model_id / "metadata.json"
+        return cls.from_file(path)
+
     @property
     def ticker(self): return self._data["ticker"]
 

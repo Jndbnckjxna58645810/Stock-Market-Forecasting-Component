@@ -10,13 +10,13 @@ from src.pipeline.build_dataset import build_dataset
 from src.models.apply_targets import apply_target
 
 from src.utils.model_utils import save_model
-from src.utils.config_utils import ensure_run_config
+from src.utils.config_utils import ensure
 
 from src.config.run_config import RunConfig
 from src.config.model_config import ModelConfig
 
 def train_xgb(run: RunConfig, model_config: ModelConfig):
-    run = ensure_run_config(run)
+    run = ensure(run, RunConfig)
     df = build_dataset(run)
 
     df, target_cols = apply_target(df, run)

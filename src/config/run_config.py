@@ -1,6 +1,9 @@
 from src.config.base_config import BaseConfig
+from src.settings.config import RUN_CONFIG_DIR
 
 class RunConfig(BaseConfig):
+    CLASS_DIR = RUN_CONFIG_DIR
+    
     @property
     def ticker(self): return self._data["ticker"]
 

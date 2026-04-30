@@ -1,6 +1,10 @@
 from src.config.base_config import BaseConfig
 
+from src.settings.config import MODELS_CONFIG_DIR
+
 class ModelConfig(BaseConfig):
+    CLASS_DIR  = MODELS_CONFIG_DIR
+
     @property
     def features(self): return self._data["features"]
 

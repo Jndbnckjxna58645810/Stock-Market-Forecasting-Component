@@ -1,8 +1,11 @@
 from src.features.features import *
 
-from src.utils.config_utils import ensure_run_config, load_model_config
+from src.utils.config_utils import ensure
 
 from src.config.run_config import RunConfig
+from src.config.model_config import ModelConfig
+from src.config.predict_config import PredictConfig
+from src.config.model_metadata import ModelMetadata
 
 FEATURE_FUNCTIONS = {
     "sma": sma, "ema": ema, "momentum": momentum,
@@ -18,9 +21,7 @@ FEATURE_FUNCTIONS = {
     "day_of_week" : day_of_week_feature, "month" : month_feature
 }
 
-def apply_features(df, run : RunConfig):
-    run = ensure_run_config(run)
-    features = load_model_config(run.model_config_path).features
+def apply_features_by_parameters(df, features):
     for feature in features:
         name = feature["name"]
         params = feature.get("params", {})
@@ -45,3 +46,11 @@ def apply_features(df, run : RunConfig):
             df[col_name] = result
             
     return df
+
+def apply_features_to_dataset(df, run: RunConfig):
+    run = ensure(run, RunConfig)
+    return apply_features_by_parameters(df, ModelConfig.from_name(run.model_config_path).features)
+
+def apply_features_to_input(df, predict_config: PredictConfig):
+    predict_config = ensure(predict_config, PredictConfig)
+    return apply_features_by_parameters(df, ModelMetadata.from_name(predict_config.model_path).features)

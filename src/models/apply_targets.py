@@ -1,6 +1,9 @@
 from src.features.targets import *
+
+from src.utils.config_utils import ensure
+
 from src.config.run_config import RunConfig
-from src.utils.config_utils import load_model_config, ensure_run_config
+from src.config.model_config import ModelConfig
 
 TARGET_FUNCTIONS = {
     "return": target_return, "direction": target_direction,
@@ -8,8 +11,8 @@ TARGET_FUNCTIONS = {
 }
 
 def apply_target(df, run : RunConfig):
-    run = ensure_run_config(run)
-    target_config = load_model_config(run.model_config_path).target
+    run = ensure(run, RunConfig)
+    target_config = ModelConfig.from_name(run.model_config_path).target
 
     name = target_config["name"]
     params = target_config.get("params", {})

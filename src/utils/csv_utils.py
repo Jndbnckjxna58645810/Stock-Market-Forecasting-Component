@@ -3,9 +3,9 @@ import pandas as pd
 from src.settings.config import *
 from src.utils.vesrioning_utils import make_signature
 from src.utils.path_utils import resolve_path
-from src.utils.config_utils import load_model_config, load_run_config
 
 from src.config.run_config import RunConfig
+from src.config.model_config import ModelConfig
 
 def save_csv(df, path):
     path = Path(path)
@@ -14,12 +14,12 @@ def save_csv(df, path):
     return path
 
 def save_processed_csv(df, run):
-    if not isinstance(run, RunConfig): run = load_run_config(run)
+    if not isinstance(run, RunConfig): run = RunConfig.from_name(run)
 
     t = run.ticker
     s, e = run.start_date, run.end_date
     i = run.interval
-    features=load_model_config(run.model_config_path).features
+    features=ModelConfig.from_name(run.model_config_path).features
 
     if not run.data_config["processed"]["save"]: return
 
@@ -34,7 +34,7 @@ def load_processed_csv(run : RunConfig):
     t = run.ticker
     s, e = run.start_date, run.end_date
     i = run.interval
-    features=load_model_config(run.model_config_path).features
+    features=ModelConfig.from_name(run.model_config_path).features
 
     base_name = f"{t}_{s}_{e}_{i}_{make_signature(features)}.csv"
     path = run.data_config["processed"]["path"]

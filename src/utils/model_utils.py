@@ -5,15 +5,19 @@ from src.settings.config import *
 
 from src.config.run_config import RunConfig
 from src.config.model_config import ModelConfig
+from src.config.predict_config import PredictConfig
 
-from src.utils.config_utils import ensure_run_config, ensure_model_config, load_model_config
-    
+from src.utils.config_utils import ensure
+
+from src.config.run_config import RunConfig
+from src.config.model_config import ModelConfig
+
 def save_json(data, path):
     with open(path, "w") as f: json.dump(data, f, indent=4, default=str)
 
 def save_model(model, metadata, run: RunConfig, model_config: ModelConfig):
-    run = ensure_run_config(run)
-    model_config = ensure_model_config(model_config)
+    run = ensure(run, RunConfig)
+    model_config = ensure(model_config, ModelConfig)
 
     m, t, i = metadata["model"]["name"], metadata["ticker"], metadata["interval"]
     timestamp = metadata["created_at"]
@@ -26,4 +30,6 @@ def save_model(model, metadata, run: RunConfig, model_config: ModelConfig):
 
     return directory
 
-def load_model(name): return joblib.load(MODELS_DIR / f"{name}.pkl")
+def load_model(predict_config: PredictConfig):
+    predict_config = ensure(predict_config, PredictConfig)
+    return joblib.load(MODELS_DIR / f"{predict_config.model_path}" / "model.pkl")

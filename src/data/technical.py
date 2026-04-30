@@ -3,31 +3,37 @@ import pandas as pd
 
 from src.settings.config import RAW_DATA_DIR
 from src.utils.csv_utils import load_csv, save_csv
-from src.utils.config_utils import ensure_run_config
-from src.pipeline.preprocessing import normalize_df, get_max_lookback
+from src.utils.config_utils import ensure
+from src.pipeline.preprocessing import normalize_df_by_parameters, get_max_lookback_by_parameters
 
 from src.config.run_config import RunConfig
+from src.config.predict_config import PredictConfig
+from src.config.model_metadata import ModelMetadata
 
-def load_technical(run: RunConfig, input_date=None):
-    run = ensure_run_config(run)
+def load_technical_by_parameters(ticker, start_date, end_date, interval="1d", save_technical=False, force_download=False, path=None):
+    default_path = RAW_DATA_DIR / f"{ticker}_{start_date}_{end_date}_{interval}.csv"
+    df = normalize_df_by_parameters(load_csv(default_path) if (default_path.exists() and not force_download)
+                      else yf.download(ticker, start=start_date, end=end_date, interval=interval), ticker)
+    if df.empty: raise ValueError(f"No data for {ticker}")
 
-    t = run.ticker
-    s = pd.to_datetime(input_date) - pd.DateOffset(days=5) if input_date != None else run.start_date
-    e = pd.to_datetime(input_date) + pd.DateOffset(days=1) if input_date != None else run.end_date
-    i = run.interval
-
-    default_path = RAW_DATA_DIR / f"{t}_{s}_{e}_{i}.csv"
-
-    df = normalize_df(load_csv(default_path) if (default_path.exists()
-                                                 and not run.data_config["technical"]["force_download"])
-                                                 else yf.download(t,
-                                                                  start=pd.to_datetime(s) - pd.DateOffset(days=get_max_lookback(run) * 2),
-                                                                  end=pd.to_datetime(e) + pd.DateOffset(days=1), interval=i), run)
-
-    if df.empty: raise ValueError(f"No data for {t}")
-
-    if run.data_config["technical"]["save"] and input_date == None:
-        path = run.data_config["technical"]["path"]
-        save_csv(df, default_path if path == None else path)
-    
+    if save_technical: save_csv(df, default_path if path == None else path)
     return df
+
+def load_technical_dataset(run: RunConfig):
+    run = ensure(run, RunConfig)
+    return load_technical_by_parameters(
+        run.ticker, run.start_date, run.end_date, run.interval,
+        save_technical=run.data_config["technical"]["save"],
+        force_download=run.data_config["technical"]["force_download"],
+        path=run.data_config["technical"]["path"])
+
+def load_technical_input(predict_config: PredictConfig):
+    predict_config = ensure(predict_config, PredictConfig)
+    model_metadata = ModelMetadata.from_name(predict_config.model_path)
+    return load_technical_by_parameters(
+        model_metadata.ticker,
+        pd.to_datetime(predict_config.input_date) - pd.DateOffset(
+            days=get_max_lookback_by_parameters(model_metadata.features) * 2 + 1),
+        pd.to_datetime(predict_config.input_date) + pd.DateOffset(days=2),
+        interval=model_metadata.interval,
+        save_technical=False, force_download=True, path=None)
