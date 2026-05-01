@@ -23,10 +23,12 @@ def save_processed_csv(df, run, model_config=None):
     s, e = run.start_date, run.end_date
     i = run.interval
     features = model_config.features
+    macro_features = model_config.macro_features
+
+    base_name = f"{t}_{s}_{e}_{i}_{make_signature(features)}_{make_signature(macro_features)}.csv"
 
     if not run.data_config["processed"]["save"]: return
 
-    base_name = f"{t}_{s}_{e}_{i}_{make_signature(features)}.csv"
     path = run.data_config["processed"]["path"]
 
     return save_csv(df, PROCESSED_DATA_DIR / base_name if path == None else path)
@@ -41,8 +43,9 @@ def load_processed_csv(run: TrainConfig, model_config=None):
     s, e = run.start_date, run.end_date
     i = run.interval
     features= model_config.features
+    macro_features = model_config.macro_features
 
-    base_name = f"{t}_{s}_{e}_{i}_{make_signature(features)}.csv"
+    base_name = f"{t}_{s}_{e}_{i}_{make_signature(features)}_{make_signature(macro_features)}.csv"
     path = run.data_config["processed"]["path"]
     
     return pd.read_csv(resolve_path(base_name if path == None else path, PROCESSED_DATA_DIR), index_col=0, parse_dates=True)

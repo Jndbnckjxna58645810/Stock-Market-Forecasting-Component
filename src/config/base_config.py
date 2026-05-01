@@ -1,4 +1,3 @@
-from pathlib import Path
 import json
 
 from src.settings.config import BASE_DIR

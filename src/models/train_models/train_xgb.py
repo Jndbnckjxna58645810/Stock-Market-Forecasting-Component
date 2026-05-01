@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 
-from sklearn.metrics import r2_score, mean_squared_error
+from src.pipeline.prepare_training_data import prepare_training_data
 
-from src.pipeline.build_dataset import build_dataset
-
-from src.models.apply_targets import apply_target_to_dataset
+from src.models.evaluate_models.metrics import compute_metrics
 
 from src.utils.model_utils import save_model
 from src.utils.config_utils import ensure
@@ -14,32 +12,19 @@ from src.utils.config_utils import ensure
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
-def train_xgb(run: TrainConfig, model_config: ModelConfig):
+def train_xgb(run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
     if model_config == None:
         if run.model_config_path == None: raise ValueError("Training requires model_config")
         model_config = ModelConfig.from_name(run.model_config_path)
     
-    df = build_dataset(run, model_config)
+    data = prepare_training_data(run, model_config)
 
-    df, target_cols = apply_target_to_dataset(df, run, model_config)
-    df = df.dropna()
-
-    train_end = run.split["train_end"]
-    val_end = run.split["val_end"]
-
-    X = df.drop(columns=target_cols)
-    y = df[target_cols]
-
-    X_train = X.loc[:train_end]
-    y_train = y.loc[:train_end]
-
-    X_val = X.loc[train_end:val_end].iloc[1:]
-    y_val = y.loc[train_end:val_end].iloc[1:]
-
-    X_test = X.loc[val_end:].iloc[1:]
-    y_test = y.loc[val_end:].iloc[1:]
-
+    df, target_cols = data["df"], data["target_cols"]
+    X_train, y_train = data["X_train"], data["y_train"]
+    X_val, y_val = data["X_val"], data["y_val"]
+    X_test, y_test = data["X_test"], data["y_test"]
+    
     corr = X_train.corr().abs()
     upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
     to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
@@ -65,11 +50,6 @@ def train_xgb(run: TrainConfig, model_config: ModelConfig):
 
     preds = model.predict(X_test[selected])
 
-    baseline = np.zeros_like(y_test)
-    print("Baseline MSE:", mean_squared_error(y_test, baseline))
-    print("R2:", r2_score(y_test, preds))
-    print("MSE:", mean_squared_error(y_test, preds))
-
     metadata = {
         "ticker": run.ticker,
         "start_date": run.start_date,
@@ -86,10 +66,9 @@ def train_xgb(run: TrainConfig, model_config: ModelConfig):
 
         "model": model_config.model,
 
-        "metrics": {
-            "r2": r2_score(y_test, preds),
-            "mse": mean_squared_error(y_test, preds)
-        },
+        "metrics": compute_metrics(y_test, preds),
+
+        "feature_importances": importances.to_dict(),
 
         "n_rows": len(df),
         "created_at": dt.datetime.now().strftime("%Y%m%d_%H%M%S"),

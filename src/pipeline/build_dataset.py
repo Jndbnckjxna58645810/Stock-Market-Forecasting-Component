@@ -32,7 +32,7 @@ def build_dataset(run: TrainConfig, model_config=None):
         if run.model_config_path == None: raise ValueError("Training requires model_config")
         model_config = ModelConfig.from_name(run.model_config_path)
 
-    loaded = load_dataset(run, model_config) #ISSUE?
+    loaded = load_dataset(run, model_config)
     if not loaded.empty: return loaded
 
     technical = load_technical_dataset(run)

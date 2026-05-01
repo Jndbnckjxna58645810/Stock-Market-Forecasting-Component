@@ -44,4 +44,7 @@ class ModelMetadata(BaseConfig):
     def metrics(self): return self._data["metrics"]
 
     @property
+    def feature_importances(self): return self._data["feature_importances"]
+
+    @property
     def model_path_config(self): return self._data["model_config_path"]
