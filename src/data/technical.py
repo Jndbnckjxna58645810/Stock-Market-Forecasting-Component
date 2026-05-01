@@ -34,9 +34,9 @@ def load_technical_input(predict_config: PredictConfig):
 
     return load_technical_by_parameters(
         model_metadata.ticker,
-        pd.to_datetime(predict_config.input_date) - pd.DateOffset(
+        pd.to_datetime(predict_config.start_date) - pd.DateOffset(
             days=get_max_lookback_by_parameters(model_metadata.features) * 2 + 1),
-        pd.to_datetime(predict_config.input_date) + pd.DateOffset(days=1),
+        pd.to_datetime(predict_config.end_date) + pd.DateOffset(days=1),
         interval=model_metadata.interval,
         save_technical=False, force_download=True, path=None)
 

@@ -53,8 +53,8 @@ def load_macro_input(predict_config: PredictConfig):
 
     return load_macro_by_parameters(
         model_metadata.macro_features, model_metadata.features,
-        pd.to_datetime(predict_config.input_date) - pd.DateOffset(days=5),
-        pd.to_datetime(predict_config.input_date) + pd.DateOffset(days=1),
+        pd.to_datetime(predict_config.start_date) - pd.DateOffset(days=5),
+        pd.to_datetime(predict_config.end_date) + pd.DateOffset(days=1),
         save_macro=False, force_download=True, path=None)
 
 def load_macro_evaluation_dataset(evaluate_config: EvaluateConfig, model_metadata: ModelMetadata):

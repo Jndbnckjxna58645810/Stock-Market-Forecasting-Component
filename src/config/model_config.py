@@ -16,3 +16,6 @@ class ModelConfig(BaseConfig):
 
     @property
     def model(self): return self._data["model"]
+
+    @property
+    def hyperparameters(self): return self._data["hyperparameters"]

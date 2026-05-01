@@ -35,11 +35,11 @@ def prepare_training_data(run: TrainConfig, model_config: ModelConfig):
 
     return {
         "X_train": X_train,
-        "y_train": y_train.values.ravel(),
+        "y_train": y_train,
         "X_val": X_val,
-        "y_val": y_val.values.ravel(),
+        "y_val": y_val,
         "X_test": X_test,
-        "y_test": y_test.values.ravel(),
+        "y_test": y_test,
         "target_cols": target_cols,
         "df": df
     }

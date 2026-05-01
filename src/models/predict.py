@@ -1,19 +1,16 @@
 from src.utils.config_utils import ensure
-from src.utils.model_utils import load_model
 
-from src.pipeline.build_dataset import build_input
+from src.models.predict_models.predict_tabular import predict_tabular
+from src.models.predict_models.predict_sequence import predict_sequence
 
-from src.config.predict_config import PredictConfig
 from src.config.model_metadata import ModelMetadata
+from src.config.predict_config import PredictConfig
 
-def predict(predict_config):
+def predict(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
+    model_metadata = ModelMetadata.from_name(predict_config.model_path)
 
-    bundle = load_model(predict_config.model_path)
-    model, scaler = bundle.get("model"), bundle.get("scaler")
-
-    X = build_input(predict_config)[ModelMetadata.from_name(
-            predict_config.model_path).selected_features]
-    if scaler != None: X = scaler.transform(X)
-
-    return model.predict(X)
+    model_name = model_metadata.model["name"]
+    if model_name == "xgb" or model_name == "rf": return predict_tabular(predict_config)
+    elif model_name == "lstm": return predict_sequence(predict_config)
+    else: raise ValueError("Unknown model")

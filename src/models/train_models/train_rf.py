@@ -4,9 +4,9 @@ import datetime as dt
 
 from src.pipeline.prepare_training_data import prepare_training_data
 
-from src.models.evaluate_models.metrics import compute_metrics
+from src.models.shared.metrics import compute_metrics
+from src.models.save_model import save_model
 
-from src.utils.model_utils import save_model
 from src.utils.config_utils import ensure
 
 from src.config.train_config import TrainConfig
@@ -20,11 +20,11 @@ def train_rf(run: TrainConfig, model_config=None):
     
     data = prepare_training_data(run, model_config)
 
-    df, target_cols = data["df"], data["target_cols"]
-    X_train, y_train = data["X_train"], data["y_train"]
-    X_val, y_val = data["X_val"], data["y_val"]
-    X_test, y_test = data["X_test"], data["y_test"]
-
+    df, target_cols = data["df"], data["target_cols"] #careful here
+    X_train, y_train = data["X_train"], data["y_train"].values.ravel()
+    X_val, y_val = data["X_val"], data["y_val"].values.ravel()
+    X_test, y_test = data["X_test"], data["y_test"].values.ravel()
+    
     corr = X_train.corr().abs()
     upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
     to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
@@ -64,6 +64,8 @@ def train_rf(run: TrainConfig, model_config=None):
 
         "target": model_config.target,
 
+        "hyperparameters": model_config.hyperparameters,
+
         "model": model_config.model,
 
         "metrics": compute_metrics(y_test, preds),
@@ -76,5 +78,5 @@ def train_rf(run: TrainConfig, model_config=None):
         "model_config_path": run.model_config_path,
     }
 
-    return save_model({"model": model, "scaler": None},
+    return save_model({"model": model, "x_scaler": None, "y_scaler": None},
                       metadata, run, model_config)

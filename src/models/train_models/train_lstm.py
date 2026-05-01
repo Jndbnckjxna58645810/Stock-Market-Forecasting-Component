@@ -1,19 +1,108 @@
 import numpy as np
-import pandas as pd
+import datetime as dt
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential # type: ignore
+from tensorflow.keras.layers import LSTM, Dense, Dropout # type: ignore
+from tensorflow.keras.optimizers import Adam # type: ignore
 
-from src.pipeline.build_dataset import build_dataset
+from src.pipeline.prepare_training_data import prepare_training_data
+from src.pipeline.create_sequences import create_sequences
 
-from src.utils.model_utils import save_model
+from src.models.shared.metrics import compute_metrics
+from src.models.save_model import save_model
+
 from src.utils.config_utils import ensure
 
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
-def train_lstm(run: TrainConfig, model_cofig: ModelConfig):
+def train_lstm(run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
-    df = build_dataset(run)
-    return None
+    if model_config is None:
+        if run.model_config_path is None: raise ValueError("Training requires model_config")
+        model_config = ModelConfig.from_name(run.model_config_path)
+
+    hp = model_config.hyperparameters
+    seq_len = hp.get("seq_len", 20)
+    units = hp.get("units", 64)
+    epochs = hp.get("epochs", 10)
+    batch_size = hp.get("batch_size", 32)
+    dropout = hp.get("dropout", 0.2)
+    learning_rate = hp.get("learning_rate", 0.001)
+
+    data = prepare_training_data(run, model_config)
+    X_train, y_train = data["X_train"], data["y_train"]
+    X_val, y_val = data["X_val"], data["y_val"]
+    X_test, y_test = data["X_test"], data["y_test"]
+
+    x_scaler = StandardScaler()
+    y_scaler = StandardScaler()
+
+    X_train_scaled = x_scaler.fit_transform(X_train)
+    X_val_scaled = x_scaler.transform(X_val)
+    X_test_scaled = x_scaler.transform(X_test)
+
+    y_train_scaled = y_scaler.fit_transform(np.array(y_train).reshape(-1, 1))
+    y_val_scaled = y_scaler.transform(np.array(y_val).reshape(-1, 1))
+    y_test_scaled = y_scaler.transform(np.array(y_test).reshape(-1, 1))
+
+    X_train_seq, y_train_seq = create_sequences(X_train_scaled, y_train_scaled, seq_len)
+    X_val_seq, y_val_seq = create_sequences(X_val_scaled, y_val_scaled, seq_len)
+    X_test_seq, y_test_seq = create_sequences(X_test_scaled, y_test_scaled, seq_len)
+
+    model = Sequential([
+        LSTM(units, input_shape=(seq_len, X_train_seq.shape[2]), return_sequences=True),
+        Dropout(dropout),
+        LSTM(units // 2),
+        Dropout(dropout),
+        Dense(1)
+    ])
+
+    model.compile(optimizer=Adam(learning_rate=learning_rate), loss='mse')
+
+    model.fit(
+        X_train_seq, y_train_seq,
+        validation_data=(X_val_seq, y_val_seq),
+        epochs=epochs,
+        batch_size=batch_size,
+        shuffle=False,
+        verbose=1
+    )
+
+    preds_scaled = model.predict(X_test_seq)
+    
+    preds = y_scaler.inverse_transform(preds_scaled.reshape(-1, 1)).ravel()
+    y_test_final = y_scaler.inverse_transform(y_test_seq.reshape(-1, 1)).ravel()
+
+    metadata = {
+        "ticker": run.ticker,
+        "start_date": run.start_date,
+        "end_date": run.end_date,
+        "interval": run.interval,
+
+        "split": run.split,
+
+        "features": model_config.features,
+        "selected_features": data["df"].drop(
+            columns=data["target_cols"]).columns.tolist(),
+        "macro_features": model_config.macro_features,
+
+        "target": model_config.target,
+
+        "hyperparameters": model_config.hyperparameters,
+
+        "model": model_config.model,
+
+        "metrics": compute_metrics(y_test_final, preds),
+        
+        "feature_importances": None,
+
+        "n_rows": len(data["df"]),
+        "created_at": dt.datetime.now().strftime("%Y%m%d_%H%M%S"),
+
+        "model_config_path": run.model_config_path,
+    }
+
+    return save_model({"model": model, "x_scaler": x_scaler, "y_scaler": y_scaler},
+                      metadata, run, model_config)

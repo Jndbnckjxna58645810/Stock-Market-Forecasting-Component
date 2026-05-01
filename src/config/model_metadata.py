@@ -44,6 +44,9 @@ class ModelMetadata(BaseConfig):
     def metrics(self): return self._data["metrics"]
 
     @property
+    def hyperparameters(self): return self._data["hyperparameters"]
+
+    @property
     def feature_importances(self): return self._data["feature_importances"]
 
     @property

@@ -56,10 +56,10 @@ def build_input(predict_config: PredictConfig):
     df = merge_df(technical, macro)
     df = apply_features_to_input(df, predict_config)
     df = handle_missing(df, method="ffill")
-    df = df.loc[:predict_config.input_date]
+    df = df.loc[predict_config.start_date:predict_config.end_date]
 
     if df.empty: raise ValueError("No available data before input_date")
-    return df.iloc[-1:]
+    return df
 
 def build_evaluation_dataset(evaluate_config: EvaluateConfig, model_metadata: ModelMetadata):
     evaluate_config = ensure(evaluate_config, EvaluateConfig)

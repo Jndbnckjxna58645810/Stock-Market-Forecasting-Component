@@ -1,8 +1,8 @@
 from src.config.base_config import BaseConfig
-from src.settings.config import RUN_CONFIG_DIR
+from src.settings.config import TRAIN_CONFIG_DIR
 
 class TrainConfig(BaseConfig):
-    CLASS_DIR = RUN_CONFIG_DIR
+    CLASS_DIR = TRAIN_CONFIG_DIR
 
     @property
     def ticker(self): return self._data["ticker"]

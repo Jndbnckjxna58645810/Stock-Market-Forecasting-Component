@@ -1,5 +1,4 @@
 import joblib
-import json
 
 from src.settings.config import *
 
@@ -7,15 +6,15 @@ from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
 from src.utils.config_utils import ensure
+from src.utils.json_utils import save_json
 
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
-def save_json(data, path):
-    with open(path, "w") as f: json.dump(data, f, indent=4, default=str)
-
-def save_model(model, metadata, run: TrainConfig, model_config: ModelConfig):
+def save_model_sequence(model_bundle, metadata, run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
+    if model_config == None:
+        model_config = ModelConfig.from_name(run.model_config_path)
     model_config = ensure(model_config, ModelConfig)
 
     m, t, i = metadata["model"]["name"], metadata["ticker"], metadata["interval"]
@@ -24,10 +23,11 @@ def save_model(model, metadata, run: TrainConfig, model_config: ModelConfig):
     directory = MODELS_DIR / f"{m}_{t}_{i}_{timestamp}"
     directory.mkdir(parents=True, exist_ok=True)
 
+    model_bundle["model"].save(directory / "model.keras")
+
+    joblib.dump(model_bundle["x_scaler"], directory / "x_scaler.pkl")
+    joblib.dump(model_bundle["y_scaler"], directory / "y_scaler.pkl")
+
     save_json(metadata, directory / "metadata.json")
-    joblib.dump(model, directory / "model.pkl")
 
     return directory
-
-def load_model(model_path):
-    return joblib.load(MODELS_DIR / f"{model_path}" / "model.pkl")
