@@ -5,7 +5,6 @@ import datetime as dt
 from src.pipeline.prepare_training_data import prepare_training_data
 
 from src.models.shared.metrics import compute_metrics
-from src.models.save_model import save_model
 
 from src.utils.config_utils import ensure
 
@@ -78,5 +77,6 @@ def train_rf(run: TrainConfig, model_config=None):
         "model_config_path": run.model_config_path,
     }
 
+    from src.models.registry import save_model
     return save_model({"model": model, "x_scaler": None, "y_scaler": None},
                       metadata, run, model_config)

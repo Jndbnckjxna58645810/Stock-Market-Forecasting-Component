@@ -6,7 +6,7 @@ from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 
 from src.utils.config_utils import ensure
-from src.utils.json_utils import save_json
+from src.utils.io_utils import save_json
 
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig

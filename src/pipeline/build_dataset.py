@@ -3,7 +3,7 @@ import pandas as pd
 from src.data.technical import load_technical_dataset, load_technical_input, load_technical_evaluation_dataset
 from src.data.macro import load_macro_dataset, load_macro_input, load_macro_evaluation_dataset
 
-from src.utils.csv_utils import save_processed_csv, load_processed_csv
+from src.utils.data_manager import save_processed_data, load_processed_data
 from src.utils.config_utils import ensure
 
 from src.pipeline.apply_features import apply_features_to_dataset, apply_features_to_input, apply_features_to_evaluation_dataset
@@ -22,7 +22,7 @@ def load_dataset(run: TrainConfig, model_config=None):
         model_config = ModelConfig.from_name(run.model_config_path)
 
     if not run.data_config["processed"]["force_download"]:
-        try: return load_processed_csv(run, model_config)
+        try: return load_processed_data(run, model_config)
         except FileNotFoundError: return pd.DataFrame()
     return pd.DataFrame()
 
@@ -44,7 +44,7 @@ def build_dataset(run: TrainConfig, model_config=None):
     df = handle_missing(df, "drop")
     df = df.loc[run.start_date:run.end_date]
 
-    save_processed_csv(df, run, model_config)
+    save_processed_data(df, run, model_config)
     return df
 
 def build_input(predict_config: PredictConfig):

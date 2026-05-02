@@ -1,4 +1,5 @@
 from src.config.base_config import BaseConfig
+
 from src.settings.config import TRAIN_CONFIG_DIR
 
 class TrainConfig(BaseConfig):

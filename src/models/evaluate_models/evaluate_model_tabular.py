@@ -1,5 +1,3 @@
-from src.models.load_model import load_model
-
 from src.utils.config_utils import ensure
 
 from src.config.model_metadata import ModelMetadata
@@ -25,7 +23,11 @@ def evaluate_model_tabular(evaluate_config: EvaluateConfig, model_name):
     X = X[model_metadata.selected_features]
     y = df[target_cols]
 
-    preds = predict_tabular_by_parameters(load_model(model_name), X)
+    from src.models.registry import load_model
+    preds_bundle = predict_tabular_by_parameters(load_model(model_name), X)
 
-    return compute_metrics(y, preds)   
-    
+    preds, dates = preds_bundle["preds"], preds_bundle["dates"]
+
+    return {"metrics": compute_metrics(y, preds),
+            "y_true": y.values.ravel().tolist(),
+            "y_pred": preds, "dates": dates}

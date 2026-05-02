@@ -1,5 +1,3 @@
-from src.models.load_model import load_model
-
 from src.utils.config_utils import ensure
 
 from src.config.model_metadata import ModelMetadata
@@ -27,9 +25,14 @@ def evaluate_model_sequence(evaluate_config: EvaluateConfig, model_name):
 
     seq_len = model_metadata.hyperparameters["seq_len"]
 
-    preds = predict_sequence_by_parameters(
+    from src.models.registry import load_model
+    preds_bundle = predict_sequence_by_parameters(
         load_model(model_name), X, seq_len)
+    
+    preds, dates = preds_bundle["preds"], preds_bundle["dates"]
     
     y_aligned = y.iloc[seq_len:]
 
-    return compute_metrics(y_aligned, preds)
+    return {"metrics": compute_metrics(y_aligned, preds),
+            "y_true": y_aligned.values.ravel().tolist(),
+            "y_pred": preds, "dates": dates}

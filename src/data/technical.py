@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 
 from src.settings.config import RAW_DATA_DIR
-from src.utils.csv_utils import load_csv, save_csv
+from src.utils.io_utils import load_csv, save_csv
 from src.utils.config_utils import ensure
 from src.pipeline.preprocessing import normalize_df_by_parameters, get_max_lookback_by_parameters
 

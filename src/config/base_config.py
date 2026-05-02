@@ -1,7 +1,7 @@
 import json
 
 from src.settings.config import BASE_DIR
-from src.utils.path_utils import resolve_path
+from src.utils.io_utils import resolve_path
 
 class BaseConfig:
     def __init__(self, data: dict): self._data = data

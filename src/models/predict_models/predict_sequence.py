@@ -1,10 +1,8 @@
 import numpy as np
 
 from src.utils.config_utils import ensure
+
 from src.pipeline.build_dataset import build_input
-
-from src.models.load_model import load_model
-
 from src.pipeline.create_sequences import create_sequences
 
 from src.config.predict_config import PredictConfig
@@ -15,21 +13,26 @@ def predict_sequence_by_parameters(model_bundle, X, seq_len):
     x_scaler = model_bundle.get("x_scaler")
     y_scaler = model_bundle.get("y_scaler")
 
-    if x_scaler: X = x_scaler.transform(X)
+    if x_scaler: X_scaled = x_scaler.transform(X)
+    else: X_scaled = X.values
 
-    X_seq, _ = create_sequences(X, np.zeros(len(X)), seq_len)
+    X_seq, _ = create_sequences(X_scaled, np.zeros(len(X_scaled)), seq_len)
 
     preds_scaled = model.predict(X_seq)
 
     if y_scaler:
-        return y_scaler.inverse_transform(preds_scaled.reshape(-1, 1)).ravel()
+        preds_final = y_scaler.inverse_transform(preds_scaled.reshape(-1, 1)).ravel()
+    else: preds_final = preds_scaled.ravel()
+
+    dates_final = X.index[seq_len:].strftime('%Y-%m-%d').tolist()
     
-    return preds_scaled.ravel()
+    return {"dates": dates_final, "preds": preds_final.tolist()}
 
 def predict_sequence(predict_config):
     predict_config = ensure(predict_config, PredictConfig)
     metadata = ModelMetadata.from_name(predict_config.model_path)
     
+    from src.models.registry import load_model
     return predict_sequence_by_parameters(
         load_model(predict_config.model_path),
         build_input(predict_config)[metadata.selected_features],
