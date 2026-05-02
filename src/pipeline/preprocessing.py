@@ -1,29 +1,50 @@
 import pandas as pd
 
+from src.utils.logging_utils import get_logger
+
+logger = get_logger("pipeline.preprocessing")
+
 def normalize_df_by_parameters(df, ticker):
     if isinstance(df.columns, pd.MultiIndex):
-        if ticker: df = df.xs(ticker, axis=1, level=1)
+        if ticker:
+            df = df.xs(ticker, axis=1, level=1)
+
+            logger.info(f"MultiIndex for {ticker} normalized for technical data")
         else: df.columns = df.columns.get_level_values(0)
 
     df.columns = [str(col).lower() for col in df.columns]
 
+    logger.info(f"Columns in technical data lowercased")
+
     df.index = pd.to_datetime(df.index)
     df.index.name = "date"
+
+    logger.info(f"Technical data index renamed to 'date'")
 
     return df
 
 def handle_missing(df, method="drop"):
+    logger.info(f"Missing data handled | method='{method}'")
+
     if method == "drop": return df.dropna()
     elif method == "ffill": return df.ffill()
     elif method == "bfill": return df.bfill()
     else: return df
 
 def handle_macro(df):
+    logger.info(f"Macroeconomical data filled for continuous timeseries")
+
     df.index = pd.to_datetime(df.index)
     return df.reindex(pd.date_range(start=df.index.min(), end=df.index.max(), freq='D')).ffill()
 
 def merge_df(df_t, df_m):
-    if df_m.empty: return df_t
+    if df_m.empty:
+        logger.warning("Macroeconomical data missing | Technical data returned with no merging")
+
+        return df_t
+    
+    logger.info(f"Technical and macroeconomical data are merged")
+
     return handle_missing(df_t.join(handle_macro(df_m)), "ffill")
 
 def get_max_lookback_by_parameters(features):

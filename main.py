@@ -1,3 +1,7 @@
+from src.utils.logging_utils import setup_logger
+
+setup_logger()
+
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 from src.config.evaluate_config import EvaluateConfig

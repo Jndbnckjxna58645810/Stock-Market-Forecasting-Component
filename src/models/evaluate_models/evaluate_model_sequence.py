@@ -1,4 +1,5 @@
 from src.utils.config_utils import ensure
+from src.utils.logging_utils import get_logger
 
 from src.config.model_metadata import ModelMetadata
 from src.config.evaluate_config import EvaluateConfig
@@ -10,9 +11,13 @@ from src.models.shared.metrics import compute_metrics
 
 from src.models.predict_models.predict_sequence import predict_sequence_by_parameters
 
+logger = get_logger("models.evaluate_models.evaluate_model_sequence")
+
 def evaluate_model_sequence(evaluate_config: EvaluateConfig, model_name):
     evaluate_config = ensure(evaluate_config, EvaluateConfig)
     model_metadata = ModelMetadata.from_name(model_name)
+
+    logger.info(f"Evaluating model: {model_name}")
 
     df = build_evaluation_dataset(evaluate_config, model_metadata)
 
@@ -33,6 +38,9 @@ def evaluate_model_sequence(evaluate_config: EvaluateConfig, model_name):
     
     y_aligned = y.iloc[seq_len:]
 
-    return {"metrics": compute_metrics(y_aligned, preds),
+    metrics = compute_metrics(y_aligned, preds)
+
+    logger.info(f"Model evaluation completed: {model_name}")
+    return {"metrics": metrics,
             "y_true": y_aligned.values.ravel().tolist(),
             "y_pred": preds, "dates": dates}

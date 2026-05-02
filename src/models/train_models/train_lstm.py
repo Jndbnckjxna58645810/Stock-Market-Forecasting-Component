@@ -12,9 +12,12 @@ from src.pipeline.create_sequences import create_sequences
 from src.models.shared.metrics import compute_metrics
 
 from src.utils.config_utils import ensure
+from src.utils.logging_utils import get_logger
 
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
+
+logger = get_logger("models.train_models.train_lstm")
 
 def train_lstm(run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
@@ -29,6 +32,16 @@ def train_lstm(run: TrainConfig, model_config=None):
     batch_size = hp.get("batch_size", 32)
     dropout = hp.get("dropout", 0.2)
     learning_rate = hp.get("learning_rate", 0.001)
+
+    logger.info(f"LSTM Training initiated for {run.ticker}" +
+                f" | Period: {run.start_date} to {run.end_date}" +
+                f" | Interval: {run.interval}" + (
+                    f" | Parameters from configuration file: {run.model_config_path}"
+                    if run.model_config_path else "") +
+                    f" | Hyperparameters used: seq_len={seq_len}, " +
+                    f"units={units}, epochs={epochs}, " +
+                    f"batch_size={batch_size}, dropout={dropout}, " +
+                    f"learning_rate={learning_rate}")
 
     data = prepare_training_data(run, model_config)
     X_train, y_train = data["X_train"], data["y_train"]
@@ -73,6 +86,8 @@ def train_lstm(run: TrainConfig, model_config=None):
     
     preds = y_scaler.inverse_transform(preds_scaled.reshape(-1, 1)).ravel()
     y_test_final = y_scaler.inverse_transform(y_test_seq.reshape(-1, 1)).ravel()
+
+    logger.info(f"LSTM Model training completed")
 
     metadata = {
         "ticker": run.ticker,

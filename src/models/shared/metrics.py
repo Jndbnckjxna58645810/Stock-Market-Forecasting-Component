@@ -2,6 +2,10 @@ import numpy as np
 
 from sklearn.metrics import r2_score, mean_squared_error
 
+from src.utils.logging_utils import get_logger
+
+logger = get_logger("models.shared.compute_metrics")
+
 def compute_metrics(y_true, preds):
     y_true = np.asarray(y_true).flatten()
     preds = np.asarray(preds).flatten()
@@ -11,6 +15,8 @@ def compute_metrics(y_true, preds):
     baseline_mse = mean_squared_error(y_true, baseline)
 
     directional_acc = np.mean(np.sign(y_true) == np.sign(preds))
+
+    logger.info("Metrics calculated")
     return {
         "mse": mse,
         "rmse": np.sqrt(mse),

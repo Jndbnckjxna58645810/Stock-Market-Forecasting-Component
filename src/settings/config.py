@@ -1,5 +1,4 @@
 import os
-import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -22,9 +21,3 @@ MODELS_CONFIG_DIR = CONFIG_DIR / "models"
 TRAIN_CONFIG_DIR = CONFIG_DIR / "train"
 PREDICTION_CONFIG_DIR = CONFIG_DIR / "predictions"
 EVALUATE_CONFIG_DIR = CONFIG_DIR / "evaluate"
-
-logging.basicConfig(
-    filename=BASE_DIR / "logs/app.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)

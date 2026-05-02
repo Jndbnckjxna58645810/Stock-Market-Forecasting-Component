@@ -7,9 +7,12 @@ from src.pipeline.prepare_training_data import prepare_training_data
 from src.models.shared.metrics import compute_metrics
 
 from src.utils.config_utils import ensure
+from src.utils.logging_utils import get_logger
 
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
+
+logger = get_logger("models.train_models.train_rf")
 
 def train_rf(run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
@@ -17,6 +20,12 @@ def train_rf(run: TrainConfig, model_config=None):
         if run.model_config_path == None: raise ValueError("Training requires model_config")
         model_config = ModelConfig.from_name(run.model_config_path)
     
+        logger.info(f"RF Training initiated for {run.ticker}" +
+                f" | Period: {run.start_date} to {run.end_date}" +
+                f" | Interval: {run.interval}" + (
+                    f" | Parameters from configuration file: {run.model_config_path}"
+                    if run.model_config_path else ""))
+
     data = prepare_training_data(run, model_config)
 
     df, target_cols = data["df"], data["target_cols"] #careful here
@@ -31,6 +40,8 @@ def train_rf(run: TrainConfig, model_config=None):
     X_train = X_train.drop(columns=to_drop)
     X_val   = X_val.drop(columns=to_drop, errors="ignore")
     X_test  = X_test.drop(columns=to_drop, errors="ignore")
+
+    logger.info(f"Columns dropped based on correlation: {', '.join(to_drop)}")
 
     from sklearn.ensemble import RandomForestRegressor
     model = RandomForestRegressor(**model_config.model["params"])
@@ -48,6 +59,8 @@ def train_rf(run: TrainConfig, model_config=None):
     model.fit(X_train[selected], y_train)
 
     preds = model.predict(X_test[selected])
+
+    logger.info(f"RF Model training completed")
 
     metadata = {
         "ticker": run.ticker,
