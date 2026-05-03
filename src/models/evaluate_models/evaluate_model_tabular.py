@@ -1,3 +1,5 @@
+import pandas as pd
+
 from src.utils.config_utils import ensure
 from src.utils.logging_utils import get_logger
 
@@ -7,7 +9,7 @@ from src.config.evaluate_config import EvaluateConfig
 from src.pipeline.apply_targets import apply_target_to_evaluation_dataset
 from src.pipeline.build_dataset import build_evaluation_dataset
 
-from src.models.shared.metrics import compute_metrics
+from src.models.shared.metrics import compute_multi_target_metrics
 
 from src.models.predict_models.predict_tabular import predict_tabular_by_parameters
 
@@ -24,18 +26,31 @@ def evaluate_model_tabular(evaluate_config: EvaluateConfig, model_name):
     df, target_cols = apply_target_to_evaluation_dataset(df, model_metadata)
     df = df.dropna()
 
-    X = df.drop(columns=target_cols)
-    X = X[model_metadata.selected_features]
-    y = df[target_cols]
+    X = df[model_metadata.selected_features]
+    y_true_df = df[target_cols]
 
     from src.models.registry import load_model
-    preds_bundle = predict_tabular_by_parameters(load_model(model_name), X)
+    preds_bundle = predict_tabular_by_parameters(load_model(model_name), X, target_cols)
 
-    preds, dates = preds_bundle["preds"], preds_bundle["dates"]
+    y_pred_df = pd.DataFrame(
+        preds_bundle["preds"], 
+        index=preds_bundle["dates"], 
+        columns=target_cols)
 
-    metrics = compute_metrics(y, preds)
+    y_true_df.index = pd.to_datetime(y_true_df.index)
+    y_pred_df.index = pd.to_datetime(y_pred_df.index)
+
+    common_idx = y_true_df.index.intersection(y_pred_df.index)
+    y_true = y_true_df.loc[common_idx]
+    y_pred = y_pred_df.loc[common_idx]
+
+    metrics_report = compute_multi_target_metrics(y_true, y_pred)
 
     logger.info(f"Model evaluation completed: {model_name}")
-    return {"metrics": metrics,
-            "y_true": y.values.ravel().tolist(),
-            "y_pred": preds, "dates": dates}
+    
+    return {
+        "metrics": metrics_report,
+        "y_true": y_true, 
+        "y_pred": y_pred,
+        "dates": common_idx.strftime('%Y-%m-%d').tolist()
+    }

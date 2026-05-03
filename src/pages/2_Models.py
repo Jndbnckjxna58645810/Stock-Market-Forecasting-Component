@@ -71,21 +71,23 @@ for m_name in models:
 
             st.write(f"**Created at:** {metadata.created_at}")
 
-        with col_metrics:
-            st.write("**Performance:**")
-            st.json(metadata.metrics)
-
             if metadata.hyperparameters:
                 st.write("**Hyperparameters:**")
                 st.json(metadata.hyperparameters)
 
+        with col_metrics:
+            st.write("**Performance:**")
+            with st.container(height=600):
+                st.json(metadata.metrics)
+
         with col_features:
+            st.write("**Features:**")
             feat_df = get_feature_table(metadata)
                 
             if not feat_df.empty:
                 st.dataframe(
                     feat_df, 
-                    height=(600 if metadata.hyperparameters else 400), 
+                    height=600, 
                     use_container_width=True,
                     hide_index=True)
 

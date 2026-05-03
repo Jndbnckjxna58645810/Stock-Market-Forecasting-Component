@@ -4,7 +4,7 @@ import datetime as dt
 
 from src.pipeline.prepare_training_data import prepare_training_data
 
-from src.models.shared.metrics import compute_metrics
+from src.models.shared.metrics import compute_multi_target_metrics
 
 from src.utils.config_utils import ensure
 from src.utils.logging_utils import get_logger
@@ -38,8 +38,8 @@ def train_xgb(run: TrainConfig, model_config=None):
     to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
 
     X_train = X_train.drop(columns=to_drop)
-    X_val   = X_val.drop(columns=to_drop, errors="ignore")
-    X_test  = X_test.drop(columns=to_drop, errors="ignore")
+    X_val = X_val.drop(columns=to_drop, errors="ignore")
+    X_test = X_test.drop(columns=to_drop, errors="ignore")
 
     logger.info(f"Columns dropped based on correlation: {', '.join(to_drop)}")
 
@@ -58,7 +58,14 @@ def train_xgb(run: TrainConfig, model_config=None):
 
     model.fit(X_train[selected], y_train)
 
-    preds = model.predict(X_test[selected])
+    raw_preds = model.predict(X_test[selected])
+    preds_df = pd.DataFrame(raw_preds, index=X_test.index, columns=target_cols)
+    
+    y_test_df = data["y_test"]
+
+    common_idx = y_test_df.index.intersection(preds_df.index)
+    y_true = y_test_df.loc[common_idx]
+    y_pred = preds_df.loc[common_idx]
 
     logger.info(f"XGB Model training completed")
 
@@ -81,7 +88,7 @@ def train_xgb(run: TrainConfig, model_config=None):
 
         "model": model_config.model,
 
-        "metrics": compute_metrics(y_test, preds),
+        "metrics": compute_multi_target_metrics(y_true, y_pred),
 
         "feature_importances": importances.to_dict(),
 

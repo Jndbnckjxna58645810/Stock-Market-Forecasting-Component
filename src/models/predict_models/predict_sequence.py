@@ -11,7 +11,7 @@ from src.config.model_metadata import ModelMetadata
 
 logger = get_logger("models.predict_models.predict_sequence")
 
-def predict_sequence_by_parameters(model_bundle, X, seq_len):
+def predict_sequence_by_parameters(model_bundle, X, seq_len, target_cols):
     model = model_bundle.get("model")
     x_scaler = model_bundle.get("x_scaler")
     y_scaler = model_bundle.get("y_scaler")
@@ -33,10 +33,18 @@ def predict_sequence_by_parameters(model_bundle, X, seq_len):
     else:
         preds_final = preds_scaled
 
+    if preds_final.ndim == 1:
+        preds_final = preds_final.reshape(-1, 1)
+
+    preds_dict = {}
+    for i, col_name in enumerate(target_cols):
+        preds_dict[col_name] = preds_final[:, i].tolist()
+
     dates_final = X.index[seq_len:].strftime('%Y-%m-%d').tolist()
     
-    logger.info("Prediction completed")
-    return {"dates": dates_final, "preds": preds_final.tolist()}
+    logger.info(f"Prediction completed for {len(target_cols)} targets")
+
+    return {"dates": dates_final, "preds": preds_dict}
 
 def predict_sequence(predict_config):
     predict_config = ensure(predict_config, PredictConfig)
@@ -49,4 +57,5 @@ def predict_sequence(predict_config):
     return predict_sequence_by_parameters(
         load_model(predict_config.model_path),
         build_input(predict_config)[metadata.selected_features],
-        metadata.hyperparameters.get("seq_len", 20))
+        metadata.hyperparameters.get("seq_len", 20),
+        metadata.target_cols)

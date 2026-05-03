@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import datetime as dt
 
 from sklearn.preprocessing import StandardScaler
@@ -9,7 +10,7 @@ from tensorflow.keras.optimizers import Adam # type: ignore
 from src.pipeline.prepare_training_data import prepare_training_data
 from src.pipeline.create_sequences import create_sequences
 
-from src.models.shared.metrics import compute_metrics
+from src.models.shared.metrics import compute_multi_target_metrics
 
 from src.utils.config_utils import ensure
 from src.utils.logging_utils import get_logger
@@ -89,6 +90,15 @@ def train_lstm(run: TrainConfig, model_config=None):
     preds = y_scaler.inverse_transform(preds_scaled)
     y_test_final = y_scaler.inverse_transform(y_test_seq)
 
+    target_cols = data["target_cols"]
+
+    y_true_df = pd.DataFrame(y_test_final, columns=target_cols)
+    y_pred_df = pd.DataFrame(preds, columns=target_cols)
+
+    common_idx = y_true_df.index.intersection(y_pred_df.index)
+    y_true = y_true_df.loc[common_idx]
+    y_pred = y_pred_df.loc[common_idx]
+
     logger.info(f"LSTM Model training completed")
 
     metadata = {
@@ -111,8 +121,8 @@ def train_lstm(run: TrainConfig, model_config=None):
 
         "model": model_config.model,
 
-        "metrics": compute_metrics(y_test_final, preds),
-        
+        "metrics": compute_multi_target_metrics(y_true, y_pred),
+
         "feature_importances": None,
 
         "n_rows": len(data["df"]),

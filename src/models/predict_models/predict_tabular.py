@@ -31,10 +31,13 @@ def predict_tabular_by_parameters(model_bundle, X, target_cols):
     
     logger.info("Prediction completed")
 
+    if preds_final.ndim == 1:
+        preds_final = preds_final.reshape(-1, 1)
+
     preds_dict = {}
     for i, col_name in enumerate(target_cols):
         preds_dict[col_name] = preds_final[:, i].tolist()
-    return {"dates": dates, "preds": preds_final.tolist()}
+    return {"dates": dates, "preds": preds_dict}
 
 def predict_tabular(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
