@@ -55,6 +55,8 @@ def load_technical_input(predict_config: PredictConfig):
     model_metadata = ModelMetadata.from_name(predict_config.model_path)
 
     offset_start = get_max_lookback_by_parameters(model_metadata.features) * 2 + 1
+    if model_metadata.hyperparameters.get("seq_len"):
+        offset_start += 2 * model_metadata.hyperparameters.get("seq_len")
 
     logger.info(f"Loading input data for {model_metadata.ticker}" +
                 f" | Period: {predict_config.start_date} to {predict_config.end_date}" +

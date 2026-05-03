@@ -29,9 +29,9 @@ def train_xgb(run: TrainConfig, model_config=None):
     data = prepare_training_data(run, model_config)
 
     df, target_cols = data["df"], data["target_cols"] #careful here
-    X_train, y_train = data["X_train"], data["y_train"].values.ravel()
-    X_val, y_val = data["X_val"], data["y_val"].values.ravel()
-    X_test, y_test = data["X_test"], data["y_test"].values.ravel()
+    X_train, y_train = data["X_train"], data["y_train"].values
+    X_val, y_val = data["X_val"], data["y_val"].values
+    X_test, y_test = data["X_test"], data["y_test"].values
     
     corr = X_train.corr().abs()
     upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
@@ -75,6 +75,7 @@ def train_xgb(run: TrainConfig, model_config=None):
         "macro_features": model_config.macro_features,
 
         "target": model_config.target,
+        "target_cols": target_cols,
 
         "hyperparameters": model_config.hyperparameters,
 

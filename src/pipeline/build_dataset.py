@@ -64,6 +64,7 @@ def build_dataset(run: TrainConfig, model_config=None):
 
 def build_input(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
+    model_metadata = ModelMetadata.from_name(predict_config.model_path)
 
     technical = load_technical_input(predict_config)
     macro = load_macro_input(predict_config)
@@ -71,9 +72,14 @@ def build_input(predict_config: PredictConfig):
     df = merge_df(technical, macro)
     df = apply_features_to_input(df, predict_config)
     df = handle_missing(df, method="ffill")
-    df = df.loc[predict_config.start_date:predict_config.end_date]
 
-    model_metadata = ModelMetadata.from_name(predict_config.model_path)
+    if model_metadata.hyperparameters.get("seq_len"):
+            offset_start = pd.to_datetime(predict_config.start_date) - pd.DateOffset(
+                days=model_metadata.hyperparameters.get("seq_len")*2)
+            df = df.loc[offset_start:predict_config.end_date]
+    else:
+        df = df.loc[predict_config.start_date:predict_config.end_date]
+
     message = (f"Processed input built for {model_metadata.ticker}" +
                f" | Period: {model_metadata.start_date} to {model_metadata.end_date}" +
                f" | Interval: {model_metadata.interval}" +

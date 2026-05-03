@@ -27,10 +27,11 @@ def predict_sequence_by_parameters(model_bundle, X, seq_len):
     preds_scaled = model.predict(X_seq)
 
     if y_scaler:
-        preds_final = y_scaler.inverse_transform(preds_scaled.reshape(-1, 1)).ravel()
+        preds_final = y_scaler.inverse_transform(preds_scaled)
 
         logger.info("Descaling performed on y")
-    else: preds_final = preds_scaled.ravel()
+    else:
+        preds_final = preds_scaled
 
     dates_final = X.index[seq_len:].strftime('%Y-%m-%d').tolist()
     

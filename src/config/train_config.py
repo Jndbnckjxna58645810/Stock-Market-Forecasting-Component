@@ -24,4 +24,4 @@ class TrainConfig(BaseConfig):
     def data_config(self): return self._data.get("data", {})
 
     @property
-    def model_config_path(self): return self._data["model_config"]
+    def model_config_path(self): return self._data["model_config_path"]

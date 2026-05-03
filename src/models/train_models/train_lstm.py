@@ -55,20 +55,22 @@ def train_lstm(run: TrainConfig, model_config=None):
     X_val_scaled = x_scaler.transform(X_val)
     X_test_scaled = x_scaler.transform(X_test)
 
-    y_train_scaled = y_scaler.fit_transform(np.array(y_train).reshape(-1, 1))
-    y_val_scaled = y_scaler.transform(np.array(y_val).reshape(-1, 1))
-    y_test_scaled = y_scaler.transform(np.array(y_test).reshape(-1, 1))
+    y_train_scaled = y_scaler.fit_transform(y_train)
+    y_val_scaled = y_scaler.transform(y_val)
+    y_test_scaled = y_scaler.transform(y_test)
 
     X_train_seq, y_train_seq = create_sequences(X_train_scaled, y_train_scaled, seq_len)
     X_val_seq, y_val_seq = create_sequences(X_val_scaled, y_val_scaled, seq_len)
     X_test_seq, y_test_seq = create_sequences(X_test_scaled, y_test_scaled, seq_len)
+
+    num_targets = y_train.shape[1]
 
     model = Sequential([
         LSTM(units, input_shape=(seq_len, X_train_seq.shape[2]), return_sequences=True),
         Dropout(dropout),
         LSTM(units // 2),
         Dropout(dropout),
-        Dense(1)
+        Dense(num_targets)
     ])
 
     model.compile(optimizer=Adam(learning_rate=learning_rate), loss='mse')
@@ -84,8 +86,8 @@ def train_lstm(run: TrainConfig, model_config=None):
 
     preds_scaled = model.predict(X_test_seq)
     
-    preds = y_scaler.inverse_transform(preds_scaled.reshape(-1, 1)).ravel()
-    y_test_final = y_scaler.inverse_transform(y_test_seq.reshape(-1, 1)).ravel()
+    preds = y_scaler.inverse_transform(preds_scaled)
+    y_test_final = y_scaler.inverse_transform(y_test_seq)
 
     logger.info(f"LSTM Model training completed")
 
@@ -103,6 +105,7 @@ def train_lstm(run: TrainConfig, model_config=None):
         "macro_features": model_config.macro_features,
 
         "target": model_config.target,
+        "target_cols": data["target_cols"],
 
         "hyperparameters": model_config.hyperparameters,
 

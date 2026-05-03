@@ -39,13 +39,9 @@ model_config_for_later = ModelConfig({
   ],
 
   "target": {
-      "name": "return",
-      "params": {
-        "horizon": 1,
-        "smoothing": 1,
-        "log": False
-      }
-    },
+    "name": "multi_return",
+    "params": {"horizons": [1,2,3,5]}
+  },
 
   "macro_features": [
     {"name": "interest_rate", "source": "FEDFUNDS"},
@@ -53,17 +49,14 @@ model_config_for_later = ModelConfig({
     {"name": "unemployment", "source": "UNRATE"}
   ],
 
-  "hyperparameters": {
-    "seq_len": 20,
-    "epochs": 10,
-    "units": 64,
-    "batch_size": 32,
-    "dropout": 0.2,
-    "learning_rate": 0.001
-  },
+  "hyperparameters": {},
 
   "model": {
-    "name": "lstm",
+    "name": "rf",
+    "params": {
+      "n_estimators": 100,
+      "max_depth": 3
+    }
   }
 })
 
@@ -97,24 +90,26 @@ train_config = TrainConfig({
     }
   },
 
-  "model_config": None
+  "model_config_path": None
 })
 
-print(build_dataset("rf_AAPL_other.json"))
+#print(build_dataset("rf_AAPL_other.json"))
 
-print(evaluate_models(EvaluateConfig({
-    "models": ["lstm_AAPL_1d_20260502_110631",
-               "rf_AAPL_1d_20260502_110622",
-               "xgb_AAPL_1d_20260502_110622",
-               train(train_config, model_config_for_later)],
-    "ticker": "AAPL",
-    "start_date": "2025-01-01",
-    "end_date": "2026-01-01",
-    "interval": "1d"
-})))
+#print(evaluate_models(EvaluateConfig({
+#    "models": ["lstm_AAPL_1d_20260502_110631",
+#               "rf_AAPL_1d_20260502_110622",
+#               "xgb_AAPL_1d_20260502_110622",
+#               train(train_config, model_config_for_later)],
+#    "ticker": "AAPL",
+#    "start_date": "2025-01-01",
+#    "end_date": "2026-01-01",
+#    "interval": "1d"
+#})))
+
+name = train("lstm_GOOGL_2010-01-01_2025-01-01_1d.json")
 
 print(predict(PredictConfig({
-  "model_path": "rf_AAPL_1d_20260502_110622",
+  "model_path": name,
   "start_date": "2025-01-01",
   "end_date": "2026-01-01"
 })))

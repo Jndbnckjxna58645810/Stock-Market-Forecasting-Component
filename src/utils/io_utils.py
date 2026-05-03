@@ -1,8 +1,14 @@
 import json
 import pandas as pd
 from pathlib import Path
+import shutil
+import os
 
-from src.settings.config import DATA_DIR
+from src.settings.config import *
+
+from src.utils.logging_utils import get_logger
+
+logger = get_logger("utils.io_utils")
 
 def resolve_path(path, base_dir=DATA_DIR):
     path = Path(path)
@@ -10,8 +16,10 @@ def resolve_path(path, base_dir=DATA_DIR):
 
     if path.exists(): return path.resolve()
 
-    candidate = Path(base_dir) / path #careful here
+    candidate = Path(base_dir) / path
     if candidate.exists(): return candidate.resolve()
+
+    logger.error(f"File not found: {path} (Checked absolute and base_dir: {base_dir})")
 
     raise FileNotFoundError(f"File not found: {path} (Checked absolute and base_dir: {base_dir})")
 
@@ -39,3 +47,25 @@ def list_contents(directory, pattern="*"):
     path = Path(directory)
     if not path.exists(): return []
     return [f.name for f in path.glob(pattern)]
+
+def delete_file(path, base_dir=DATA_DIR):
+    target = resolve_path(path, base_dir)
+    if target.is_file():
+        os.remove(target)
+
+        logger.info(f"File {target} has been deleted.")
+    else:
+        logger.error(f"Target {target} is not a file. Use delete_directory instead.")
+
+        raise ValueError(f"Target {target} is not a file. Use delete_directory instead.")
+
+def delete_directory(path, base_dir=MODELS_DIR):
+    target = resolve_path(path, base_dir)
+    if target.is_dir():
+        shutil.rmtree(target)
+
+        logger.info(f"Directory {target} has been deleted.")
+    else:
+        logger.error(f"Target {target} is not a directory. Use delete_file instead.")
+
+        raise ValueError(f"Target {target} is not a directory. Use delete_file instead.")

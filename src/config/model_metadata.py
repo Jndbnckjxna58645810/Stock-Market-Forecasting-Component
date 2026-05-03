@@ -38,6 +38,9 @@ class ModelMetadata(BaseConfig):
     def target(self): return self._data["target"]
 
     @property
+    def target_cols(self): return self._data["target_cols"]
+
+    @property
     def model(self): return self._data["model"]
 
     @property
@@ -51,3 +54,9 @@ class ModelMetadata(BaseConfig):
 
     @property
     def model_path_config(self): return self._data["model_config_path"]
+
+    @property
+    def n_rows(self): return self._data["n_rows"]
+
+    @property
+    def created_at(self): return self._data["created_at"]

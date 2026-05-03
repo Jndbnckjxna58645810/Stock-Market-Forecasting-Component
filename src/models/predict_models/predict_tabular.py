@@ -8,7 +8,7 @@ from src.config.model_metadata import ModelMetadata
 
 logger = get_logger("models.predict_models.predict_tabular")
 
-def predict_tabular_by_parameters(model_bundle, X):
+def predict_tabular_by_parameters(model_bundle, X, target_cols):
     model = model_bundle.get("model")
     x_scaler = model_bundle.get("x_scaler")
     y_scaler = model_bundle.get("y_scaler")
@@ -23,13 +23,17 @@ def predict_tabular_by_parameters(model_bundle, X):
     preds_scaled = model.predict(X)
 
     if y_scaler:
-        preds_final = y_scaler.inverse_transform(preds_scaled.reshape(-1, 1)).ravel()
+        preds_final = y_scaler.inverse_transform(preds_scaled)
 
         logger.info("Descaling performed on y")
     else:
-        preds_final = preds_scaled.ravel()
+        preds_final = preds_scaled
     
     logger.info("Prediction completed")
+
+    preds_dict = {}
+    for i, col_name in enumerate(target_cols):
+        preds_dict[col_name] = preds_final[:, i].tolist()
     return {"dates": dates, "preds": preds_final.tolist()}
 
 def predict_tabular(predict_config: PredictConfig):
@@ -42,4 +46,5 @@ def predict_tabular(predict_config: PredictConfig):
     from src.models.registry import load_model
     return predict_tabular_by_parameters(
         load_model(predict_config.model_path),
-        build_input(predict_config)[metadata.selected_features])
+        build_input(predict_config)[metadata.selected_features],
+        metadata.target_cols)
