@@ -66,7 +66,7 @@ def load_technical_input(predict_config: PredictConfig):
     return load_technical_by_parameters(
         model_metadata.ticker,
         pd.to_datetime(predict_config.start_date) - pd.DateOffset(days=offset_start),
-        pd.to_datetime(predict_config.end_date) + pd.DateOffset(days=1),
+        pd.to_datetime(predict_config.end_date) + pd.DateOffset(days=1+len(model_metadata.target_cols)*2),
         interval=model_metadata.interval,
         save_technical=False, force_download=True, path=None)
 
@@ -74,6 +74,8 @@ def load_technical_evaluation_dataset(evaluate_config: EvaluateConfig, model_met
     evaluate_config = ensure(evaluate_config, EvaluateConfig)
 
     offset_start = get_max_lookback_by_parameters(model_metadata.features) * 2 + 1
+    if model_metadata.hyperparameters.get("seq_len"):
+        offset_start += 2 * model_metadata.hyperparameters.get("seq_len")
 
     logger.info(f"Loading evaluation data for {model_metadata.ticker}" +
                 f" | Period: {evaluate_config.start_date} to {evaluate_config.end_date}" +

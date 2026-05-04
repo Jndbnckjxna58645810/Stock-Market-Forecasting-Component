@@ -35,13 +35,9 @@ model_config_for_later = ModelConfig({
   ],
 
   "target": {
-      "name": "return",
-      "params": {
-        "horizon": 1,
-        "smoothing": 1,
-        "log": False
-      }
-    },
+    "name": "multi_return",
+    "params": {"horizons": [1,2,3,5]}
+  },
 
   "macro_features": [
     {"name": "interest_rate", "source": "FEDFUNDS"},
@@ -90,13 +86,9 @@ model_config_2 = ModelConfig({
   ],
 
   "target": {
-      "name": "return",
-      "params": {
-        "horizon": 1,
-        "smoothing": 1,
-        "log": False
-      }
-    },
+    "name": "multi_return",
+    "params": {"horizons": [1,2,3,5]}
+  },
 
   "macro_features": [
     {"name": "interest_rate", "source": "FEDFUNDS"},
@@ -146,13 +138,9 @@ model_config_3 = ModelConfig({
   ],
 
   "target": {
-      "name": "return",
-      "params": {
-        "horizon": 1,
-        "smoothing": 1,
-        "log": False
-      }
-    },
+    "name": "multi_return",
+    "params": {"horizons": [1,2,3,5]}
+  },
 
   "hyperparameters": {
     "seq_len": 20,
@@ -209,8 +197,13 @@ train_config = TrainConfig({
 
 #print(build_dataset("rf_AAPL_other.json"))
 
-train(train_config, model_config_2)
-
-train(train_config, model_config_for_later)
-
-train(train_config, model_config_3)
+evaluate_models(EvaluateConfig({
+  "models": ["rf_AAPL_1d_20260504_163001"],
+  "ticker": "AAPL",
+  "start_date": "2026-04-04",
+  "end_date": "2026-04-05",
+  "interval": "1d",
+  "target": {
+    "name": "multi_return",
+    "params": {"horizons": [1,2,3,5]}
+  }}))

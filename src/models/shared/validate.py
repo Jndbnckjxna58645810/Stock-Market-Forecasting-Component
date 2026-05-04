@@ -17,7 +17,7 @@ def validate_models_compatible(evaluate_config: EvaluateConfig):
         models_metadata.append(m)
 
         message = (f" | Expected: ticker={evaluate_config.ticker}, " +
-                   f"interval={evaluate_config.interval}, target={models_metadata[0].target}" +
+                   f"interval={evaluate_config.interval}, target={evaluate_config.target}" +
                    f" | Evaluation period: {evaluate_config.start_date} to {evaluate_config.end_date}" +
                    f" | Actual: ticker={m.ticker}, interval={m.interval}, target={m.target}" +
                    f" | Training period: {m.start_date} to {m.end_date}")
@@ -30,7 +30,7 @@ def validate_models_compatible(evaluate_config: EvaluateConfig):
             logger.error(f"Interval mismatch for {model}{message}")
             raise ValueError(f"Interval mismatch for {model}{message}")
 
-        if m.target != models_metadata[0].target:
+        if m.target != evaluate_config.target:
             logger.error(f"Target mismatch for {model}{message}")
             raise ValueError(f"Target mismatch for {model}{message}")
 

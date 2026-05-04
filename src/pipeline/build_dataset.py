@@ -103,10 +103,17 @@ def build_evaluation_dataset(evaluate_config: EvaluateConfig, model_metadata: Mo
     df = apply_features_to_evaluation_dataset(df, model_metadata)
     df = handle_missing(df, method="ffill")
     df = handle_missing(df, "drop")
+    
+    if model_metadata.hyperparameters.get("seq_len"):
+            offset_start = pd.to_datetime(evaluate_config.start_date) - pd.DateOffset(
+                days=model_metadata.hyperparameters.get("seq_len")*2)
+            df = df.loc[offset_start:evaluate_config.end_date]
+    else:
+        df = df.loc[evaluate_config.start_date:evaluate_config.end_date]
 
     logger.info(f"Processed evaluation built for {model_metadata.ticker}" +
                 f" | Period: {model_metadata.start_date} to {model_metadata.end_date}" +
                 f" | Interval: {model_metadata.interval}" +
                 f" | Features from model metadata (evaluation)")
 
-    return df.loc[evaluate_config.start_date:evaluate_config.end_date]
+    return df

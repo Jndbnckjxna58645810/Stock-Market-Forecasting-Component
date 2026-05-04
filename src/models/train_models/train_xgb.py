@@ -46,7 +46,12 @@ def train_xgb(run: TrainConfig, model_config=None):
     import xgboost as xgb
     model = xgb.XGBRegressor(**model_config.model["params"])
 
-    model.fit(X_train, y_train)
+    if (X_val is not None) and (len(X_val) > 0):
+        model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+    else:
+        logger.warning("No validation data found. Training XGBoost without early stopping.")
+        
+        model.fit(X_train, y_train)
 
     importances = pd.Series(
         model.feature_importances_,

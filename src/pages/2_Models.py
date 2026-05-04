@@ -4,9 +4,6 @@ import pandas as pd
 from src.settings.config import *
 from src.utils.io_utils import list_contents, delete_directory
 
-from src.models.registry import predict
-
-from src.config.predict_config import PredictConfig
 from src.config.model_metadata import ModelMetadata
 
 from src.utils.gui_utils import get_feature_table
@@ -28,10 +25,22 @@ for m_name in models:
                 st.session_state['active_model'] = m_name
                 st.session_state['show_predict_widget'] = True
 
+                st.switch_page("pages/3_Inference.py")
+
         with col_c:
             if st.button("Delete Model", key=f"del_{m_name}", use_container_width=True):
                 delete_directory(m_name, base_dir=MODELS_DIR)
                 st.success(f"Deleted model folder: {m_name}")
+
+                if 'valid_models' in st.session_state:
+                    if m_name in st.session_state['valid_models']:
+                        st.session_state['valid_models'].remove(m_name)
+                        
+                if 'selected_model_names' in st.session_state:
+                    if m_name in st.session_state['selected_model_names']:
+                        st.session_state['selected_model_names'].remove(m_name)
+
+                st.success(f"Model {m_name} deleted successfully.")
                 st.rerun()
 
         col_info, col_metrics, col_features = st.columns(3)
@@ -90,25 +99,3 @@ for m_name in models:
                     height=600, 
                     use_container_width=True,
                     hide_index=True)
-
-if st.session_state.get('show_predict_widget'):
-    st.divider()
-    st.subheader(f"Inference: {st.session_state['active_model']}")
-        
-    c1, c2 = st.columns(2)
-    start_date = c1.date_input("Start Date")
-    end_date = c2.date_input("End Date")
-
-    if st.button("Generate Forecast"):
-        with st.spinner("Calculating..."):
-            config = PredictConfig({
-                "model_path": st.session_state['active_model'],
-                "start_date": start_date, "end_date": end_date
-            })
-                
-            result = predict(config)
-                
-            if result.size >= 5:
-                st.line_chart(result)
-                
-            st.table(pd.DataFrame(result))

@@ -28,10 +28,13 @@ def train_rf(run: TrainConfig, model_config=None):
 
     data = prepare_training_data(run, model_config)
 
-    df, target_cols = data["df"], data["target_cols"] #careful here
+    df, target_cols = data["df"], data["target_cols"]
     X_train, y_train = data["X_train"], data["y_train"].values
     X_val, y_val = data["X_val"], data["y_val"].values
     X_test, y_test = data["X_test"], data["y_test"].values
+
+    X_train = pd.concat([X_train, X_val])
+    y_train = pd.concat([data["y_train"], data["y_val"]])
     
     corr = X_train.corr().abs()
     upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))

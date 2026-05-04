@@ -19,3 +19,6 @@ class EvaluateConfig(BaseConfig):
 
     @property
     def interval(self): return self._data["interval"]
+
+    @property
+    def target(self): return self._data["target"]
