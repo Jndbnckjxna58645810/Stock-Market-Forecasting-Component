@@ -3,7 +3,6 @@ from src.config.model_config import ModelConfig
 from src.config.evaluate_config import EvaluateConfig
 from src.config.predict_config import PredictConfig
 from src.models.registry import evaluate_models, train, predict
-from src.pipeline.build_dataset import build_dataset
 
 model_config_for_later = ModelConfig({
   "features": [
@@ -195,15 +194,24 @@ train_config = TrainConfig({
   "model_config_path": None
 })
 
-#print(build_dataset("rf_AAPL_other.json"))
+# train("rf_AAPL_other.json")
 
-evaluate_models(EvaluateConfig({
-  "models": ["rf_AAPL_1d_20260504_163001"],
+# train("lstm_example.json")
+
+print(predict(PredictConfig({
+    "model_path": "rf_AAPL_1d_20260505_104438",
+    "start_date": "2026-05-04",
+    "end_date": "2026-05-04"
+})))
+
+print(evaluate_models(EvaluateConfig({
+  "models": ["xgb_AAPL_1d_20260504_183548", "rf_AAPL_1d_20260504_183550", "lstm_AAPL_1d_20260505_121044"],
   "ticker": "AAPL",
-  "start_date": "2026-04-04",
-  "end_date": "2026-04-05",
+  "start_date": "2025-01-01",
+  "end_date": "2026-01-01",
   "interval": "1d",
   "target": {
     "name": "multi_return",
     "params": {"horizons": [1,2,3,5]}
-  }}))
+  }
+})))

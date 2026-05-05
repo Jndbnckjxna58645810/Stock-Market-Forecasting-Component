@@ -6,7 +6,7 @@ from src.utils.logging_utils import get_logger
 from src.config.model_metadata import ModelMetadata
 from src.config.evaluate_config import EvaluateConfig
 
-from src.pipeline.apply_targets import apply_target_to_evaluation_dataset
+from src.pipeline.apply_targets import apply_target_by_parameters
 from src.pipeline.build_dataset import build_evaluation_dataset
 
 from src.models.shared.metrics import compute_multi_target_metrics
@@ -23,7 +23,7 @@ def evaluate_model_tabular(evaluate_config: EvaluateConfig, model_name):
 
     df = build_evaluation_dataset(evaluate_config, model_metadata)
 
-    df, target_cols = apply_target_to_evaluation_dataset(df, model_metadata)
+    df, target_cols = apply_target_by_parameters(df, evaluate_config.target)
     df = df.dropna()
 
     X = df[model_metadata.selected_features]

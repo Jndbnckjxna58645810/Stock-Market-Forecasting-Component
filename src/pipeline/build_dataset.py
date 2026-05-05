@@ -1,14 +1,15 @@
 import pandas as pd
+import math
 
-from src.data.technical import load_technical_dataset, load_technical_input, load_technical_evaluation_dataset
-from src.data.macro import load_macro_dataset, load_macro_input, load_macro_evaluation_dataset
+from src.data.technical import load_technical_by_parameters
+from src.data.macro import load_macro_by_parameters
 
 from src.utils.data_manager import save_processed_data, load_processed_data
 from src.utils.config_utils import ensure
 from src.utils.logging_utils import get_logger
 
-from src.pipeline.apply_features import apply_features_to_dataset, apply_features_to_input, apply_features_to_evaluation_dataset
-from src.pipeline.preprocessing import merge_df, handle_missing
+from src.pipeline.apply_features import apply_features_by_parameters
+from src.pipeline.preprocessing import handle_missing, get_max_lookback_by_parameters, get_max_horizon_by_parameters, merge_and_align_datasets, convert_bars_to_days
 
 from src.config.train_config import TrainConfig
 from src.config.predict_config import PredictConfig
@@ -29,7 +30,49 @@ def load_dataset(run: TrainConfig, model_config=None):
         except FileNotFoundError: return pd.DataFrame()
     return pd.DataFrame()
 
-def build_dataset(run: TrainConfig, model_config=None):
+def build_dataset_by_parameters(ticker, start_date, end_date, interval,
+                                features, macro_features, target,
+                                hyperparameters, data_config=None):
+    lookback_days = convert_bars_to_days((hyperparameters.get("seq_len", 0) * 2
+                                          + get_max_lookback_by_parameters(features)), interval)
+    lookforward_days = convert_bars_to_days(get_max_horizon_by_parameters(target), interval)
+    
+    effective_start = pd.to_datetime(start_date) - pd.DateOffset(days=lookback_days)
+    effective_end = pd.to_datetime(end_date) + pd.DateOffset(days=lookforward_days)
+
+    technical = load_technical_by_parameters(
+        ticker, effective_start, effective_end, interval,
+        save_technical=False, force_download=True, path=None)
+
+    macro = load_macro_by_parameters(
+        macro_features, effective_start, effective_end,
+        save_macro=False, force_download=True, path=None)
+
+    df = merge_and_align_datasets(technical, macro)
+    df = apply_features_by_parameters(df, features)
+    df = handle_missing(df, method="ffill")
+
+    print(df)
+
+    df = df.dropna()
+
+    print(df)
+
+    logger.info(f"Processed dataset built for {ticker}" +
+                f" | Period: {start_date} to {end_date}" +
+                f" | Offset period: {effective_start} to {effective_end}" +
+                f" | Interval: {interval}")
+    
+    last_date = pd.to_datetime(df.index[-1]).date()
+    requested_start = pd.to_datetime(start_date).date()
+
+    if df.empty or (last_date < requested_start):
+        logger.error(f"Insufficient data for {ticker} after offsets.")
+        raise ValueError(f"Insufficient data for {ticker} after offsets.")
+         
+    return df
+
+def build_training_dataset(run: TrainConfig, model_config=None):
     run = ensure(run, TrainConfig)
     if model_config == None:
         if run.model_config_path == None: raise ValueError("Training requires model_config")
@@ -43,21 +86,15 @@ def build_dataset(run: TrainConfig, model_config=None):
                     f" | Features from configuration file: {run.model_config_path}")
 
         return loaded
-
-    technical = load_technical_dataset(run)
-    macro = load_macro_dataset(run, model_config)
-
-    df = merge_df(technical, macro)
-    df = apply_features_to_dataset(df, run, model_config)
-    df = handle_missing(df, method="ffill")
-    df = handle_missing(df, "drop")
-    df = df.loc[run.start_date:run.end_date]
-
-    logger.info(f"Processed dataset built for {run.ticker}" +
-                f" | Period: {run.start_date} to {run.end_date}" +
-                f" | Interval: {run.interval}" + (
-                    f" | Features from configuration file: {run.model_config_path}"
-                    if run.model_config_path else ""))
+    
+    df = build_dataset_by_parameters(
+        run.ticker,
+        run.start_date, run.end_date,
+        run.interval,
+        model_config.features, model_config.macro_features,
+        model_config.target,
+        model_config.hyperparameters,
+        data_config=run.data_config)
 
     save_processed_data(df, run, model_config)
     return df
@@ -66,54 +103,22 @@ def build_input(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
     model_metadata = ModelMetadata.from_name(predict_config.model_path)
 
-    technical = load_technical_input(predict_config)
-    macro = load_macro_input(predict_config)
-
-    df = merge_df(technical, macro)
-    df = apply_features_to_input(df, predict_config)
-    df = handle_missing(df, method="ffill")
-
-    if model_metadata.hyperparameters.get("seq_len"):
-            offset_start = pd.to_datetime(predict_config.start_date) - pd.DateOffset(
-                days=model_metadata.hyperparameters.get("seq_len")*2)
-            df = df.loc[offset_start:predict_config.end_date]
-    else:
-        df = df.loc[predict_config.start_date:predict_config.end_date]
-
-    message = (f"Processed input built for {model_metadata.ticker}" +
-               f" | Period: {model_metadata.start_date} to {model_metadata.end_date}" +
-               f" | Interval: {model_metadata.interval}" +
-               f" | Features from model metadata: {predict_config.model_path}")
-    logger.info(f"Processed input built for {message}")
-
-    if df.empty:
-        logger.error(f"No available data for {message}")
-
-        raise ValueError(f"No available data for {message}")
-    return df
+    return build_dataset_by_parameters(
+        model_metadata.ticker,
+        predict_config.start_date, predict_config.end_date,
+        model_metadata.interval,
+        model_metadata.features, model_metadata.macro_features,
+        model_metadata.target,
+        model_metadata.hyperparameters)
 
 def build_evaluation_dataset(evaluate_config: EvaluateConfig, model_metadata: ModelMetadata):
     evaluate_config = ensure(evaluate_config, EvaluateConfig)
     model_metadata = ensure(model_metadata, ModelMetadata)
 
-    technical = load_technical_evaluation_dataset(evaluate_config, model_metadata)
-    macro = load_macro_evaluation_dataset(evaluate_config, model_metadata)
-
-    df = merge_df(technical, macro)
-    df = apply_features_to_evaluation_dataset(df, model_metadata)
-    df = handle_missing(df, method="ffill")
-    df = handle_missing(df, "drop")
-    
-    if model_metadata.hyperparameters.get("seq_len"):
-            offset_start = pd.to_datetime(evaluate_config.start_date) - pd.DateOffset(
-                days=model_metadata.hyperparameters.get("seq_len")*2)
-            df = df.loc[offset_start:evaluate_config.end_date]
-    else:
-        df = df.loc[evaluate_config.start_date:evaluate_config.end_date]
-
-    logger.info(f"Processed evaluation built for {model_metadata.ticker}" +
-                f" | Period: {model_metadata.start_date} to {model_metadata.end_date}" +
-                f" | Interval: {model_metadata.interval}" +
-                f" | Features from model metadata (evaluation)")
-
-    return df
+    return build_dataset_by_parameters(
+        evaluate_config.ticker,
+        evaluate_config.start_date, evaluate_config.end_date,
+        evaluate_config.interval,
+        model_metadata.features, model_metadata.macro_features,
+        model_metadata.target,
+        model_metadata.hyperparameters)

@@ -1,6 +1,5 @@
-from src.pipeline.build_dataset import build_dataset
-
-from src.pipeline.apply_targets import apply_target_to_dataset
+from src.pipeline.apply_targets import apply_target_by_parameters
+from src.pipeline.build_dataset import build_dataset_by_parameters
 
 from src.utils.config_utils import ensure
 from src.utils.logging_utils import get_logger
@@ -22,7 +21,13 @@ def prepare_training_data(run: TrainConfig, model_config: ModelConfig):
                     f" | Features from configuration file: {run.model_config_path}"
                     if run.model_config_path else ""))
 
-    df = build_dataset(run, model_config)
+    df = build_dataset_by_parameters(
+        run.ticker,
+        run.start_date, run.end_date,
+        run.interval,
+        model_config.features, model_config.macro_features,
+        model_config.target,
+        model_config.hyperparameters)
 
     logger.info(f"Applying target to {run.ticker}" +
                 f" | Period: {run.start_date} to {run.end_date}" +
@@ -30,7 +35,7 @@ def prepare_training_data(run: TrainConfig, model_config: ModelConfig):
                     f" | Features from configuration file: {run.model_config_path}"
                     if run.model_config_path else ""))
 
-    df, target_cols = apply_target_to_dataset(df, run, model_config)
+    df, target_cols = apply_target_by_parameters(df, model_config.target)
     df = df.dropna()
 
     X = df.drop(columns=target_cols)

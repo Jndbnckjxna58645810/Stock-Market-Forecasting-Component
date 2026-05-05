@@ -1,4 +1,5 @@
 import pandas as pd
+import math
 
 from src.utils.logging_utils import get_logger
 
@@ -31,21 +32,27 @@ def handle_missing(df, method="drop"):
     elif method == "bfill": return df.bfill()
     else: return df
 
-def handle_macro(df):
-    logger.info(f"Macroeconomical data filled for continuous timeseries")
-
-    df.index = pd.to_datetime(df.index)
-    return df.reindex(pd.date_range(start=df.index.min(), end=df.index.max(), freq='D')).ffill()
-
-def merge_df(df_t, df_m):
+def merge_and_align_datasets(df_t, df_m):
     if df_m.empty:
-        logger.warning("Macroeconomical data missing | Technical data returned with no merging")
-
+        logger.warning("Macro data empty | Returning technical data only")
         return df_t
     
-    logger.info(f"Technical and macroeconomical data are merged")
+    combined = df_t.join(df_m, how='outer')
 
-    return handle_missing(df_t.join(handle_macro(df_m)), "ffill")
+    macro_cols = df_m.columns
+    combined[macro_cols] = combined[macro_cols].ffill()
+
+    final_df = combined.reindex(df_t.index)
+
+    print(final_df)
+    
+    logger.info("Technical and macroeconomical data merged and aligned to interval")
+    return final_df
+
+def convert_bars_to_days(bars, interval):
+    mapping = {"1h": 1/24, "4h": 4/24, "1d": 1, "1wk": 7, "1mo": 31}
+    days_per_bar = mapping.get(interval, 1)
+    return math.ceil(bars * days_per_bar * 1.4) + 31 * 2
 
 def get_max_lookback_by_parameters(features):
     max_lookback = 0
@@ -57,3 +64,9 @@ def get_max_lookback_by_parameters(features):
                 max_lookback = max(max_lookback, v)
 
     return max_lookback
+
+def get_max_horizon_by_parameters(target):
+    max_horizon = target["params"].get("horizon", 1)
+    if target["params"].get("horizons", 0):
+        max_horizon = max(target["params"].get("horizons", 1))
+    return max_horizon
