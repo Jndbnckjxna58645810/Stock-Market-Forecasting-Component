@@ -10,9 +10,6 @@ def compute_metrics(y_true, preds):
     y_true = np.asarray(y_true).flatten()
     preds = np.asarray(preds).flatten()
 
-    print(y_true)
-    print(preds)
-
     mse = mean_squared_error(y_true, preds)
     baseline = np.zeros_like(y_true)
     baseline_mse = mean_squared_error(y_true, baseline)
@@ -38,9 +35,6 @@ def compute_multi_target_metrics(y_true_df, y_pred_df):
 
     overall = compute_metrics(
         y_true_df.values.ravel(), 
-        y_pred_df.values.ravel()
-    )
+        y_pred_df.values.ravel())
 
-    return {
-        "overall": overall,
-        "breakdown": breakdown}
+    return {"overall": overall, "breakdown": breakdown}

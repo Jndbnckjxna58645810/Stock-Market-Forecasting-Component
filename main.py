@@ -162,15 +162,15 @@ model_config_3 = ModelConfig({
 })
 
 train_config = TrainConfig({
-  "ticker": "AAPL",
-  "start_date": "2000-01-01",
+  "ticker": "MSFT",
+  "start_date": "1990-01-01",
   "end_date": "2020-01-01",
   "interval": "1d",
 
   "split": {
     "type": "date",
-    "train_end": "2012-01-01",
-    "val_end": "2016-01-01"
+    "train_end": "2010-01-01",
+    "val_end": "2015-01-01"
   },
 
   "data": {
@@ -198,20 +198,24 @@ train_config = TrainConfig({
 
 # train("lstm_example.json")
 
-print(predict(PredictConfig({
-    "model_path": "rf_AAPL_1d_20260505_104438",
-    "start_date": "2026-05-04",
-    "end_date": "2026-05-04"
-})))
+# print(predict(PredictConfig({
+#     "model_path": "rf_AAPL_1d_20260505_104438",
+#     "start_date": "2026-05-04",
+#     "end_date": "2026-05-04"
+# })))
 
-print(evaluate_models(EvaluateConfig({
-  "models": ["xgb_AAPL_1d_20260504_183548", "rf_AAPL_1d_20260504_183550", "lstm_AAPL_1d_20260505_121044"],
-  "ticker": "AAPL",
-  "start_date": "2025-01-01",
-  "end_date": "2026-01-01",
-  "interval": "1d",
-  "target": {
-    "name": "multi_return",
-    "params": {"horizons": [1,2,3,5]}
-  }
-})))
+# print(evaluate_models(EvaluateConfig({
+#   "models": ["xgb_AAPL_1d_20260504_183548", "rf_AAPL_1d_20260504_183550", "lstm_AAPL_1d_20260505_121044"],
+#   "ticker": "AAPL",
+#   "start_date": "2025-01-01",
+#   "end_date": "2026-01-01",
+#   "interval": "1d",
+#   "target": {
+#     "name": "multi_return",
+#     "params": {"horizons": [1,2,3,5]}
+#   }
+# })))
+
+#train("lstm_example.json")
+
+train(train_config, model_config_2)

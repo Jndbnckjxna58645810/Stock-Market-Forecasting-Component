@@ -146,31 +146,36 @@ if 'eval_results' in st.session_state:
     overall_metrics = {}
     for m_name, data in results.items():
         overall_metrics[m_name] = data['metrics']['overall']
-    
+
     metrics_df = pd.DataFrame(overall_metrics)
+    st.subheader("Global Performance Summary")
     st.dataframe(metrics_df, use_container_width=True)
 
     first_model = list(results.keys())[0]
     target_cols = results[first_model]['y_true'].columns
 
     for col in target_cols:
-        st.subheader(f"Target: {col}")
+        st.markdown(f"---")
+        st.subheader(f"Target Feature: **{col}**")
 
-        common_dates = set(results[first_model]['dates'])
+        col_metrics = {}
         for m_name in results:
-            common_dates = common_dates.intersection(set(results[m_name]['dates']))
-        
-        common_dates = sorted(list(common_dates))
-        
-        plot_df = pd.DataFrame(index=pd.to_datetime(common_dates))
+            if 'breakdown' in results[m_name]['metrics'] and col in results[m_name]['metrics']['breakdown']:
+                col_metrics[m_name] = results[m_name]['metrics']['breakdown'][col]
+                
+        if col_metrics:
+            st.markdown("**Feature Specific Errors:**")
+            st.dataframe(pd.DataFrame(col_metrics), use_container_width=True)
 
-        y_true_all = results[first_model]['y_true']
-        plot_df['Actual'] = y_true_all.reindex(plot_df.index)[col]
-        
+        plot_df = pd.DataFrame(index=results[first_model]['y_true'].index)
+        plot_df['Actual'] = results[first_model]['y_true'][col]
+
         for m_name in results:
-            y_pred_m = results[m_name]['y_pred']
-            plot_df[m_name] = y_pred_m.reindex(plot_df.index)[col]
+            plot_df[m_name] = results[m_name]['y_pred'][col]
+
+        plot_df = plot_df.dropna()
         
+        st.markdown("**Visualizing Alignment:**")
         st.line_chart(plot_df)
 
 if valid_names:

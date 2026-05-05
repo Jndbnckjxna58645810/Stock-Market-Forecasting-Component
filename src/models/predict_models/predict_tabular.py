@@ -1,7 +1,7 @@
 from src.utils.config_utils import ensure
 from src.utils.logging_utils import get_logger
 
-from src.pipeline.build_dataset import build_input
+from src.pipeline.prepare_input_data import prepare_input_data
 
 from src.config.predict_config import PredictConfig
 from src.config.model_metadata import ModelMetadata
@@ -49,5 +49,5 @@ def predict_tabular(predict_config: PredictConfig):
     from src.models.registry import load_model
     return predict_tabular_by_parameters(
         load_model(predict_config.model_path),
-        build_input(predict_config)[metadata.selected_features],
+        prepare_input_data(predict_config)[metadata.selected_features],
         metadata.target_cols)

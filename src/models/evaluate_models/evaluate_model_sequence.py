@@ -6,8 +6,7 @@ from src.utils.logging_utils import get_logger
 from src.config.model_metadata import ModelMetadata
 from src.config.evaluate_config import EvaluateConfig
 
-from src.pipeline.apply_targets import apply_target_by_parameters
-from src.pipeline.build_dataset import build_evaluation_dataset
+from src.pipeline.prepare_evaluation_data import prepare_evaluation_data
 
 from src.models.shared.metrics import compute_multi_target_metrics
 
@@ -21,9 +20,7 @@ def evaluate_model_sequence(evaluate_config: EvaluateConfig, model_name):
 
     logger.info(f"Evaluating model: {model_name}")
 
-    df = build_evaluation_dataset(evaluate_config, model_metadata)
-
-    df, target_cols = apply_target_by_parameters(df, evaluate_config.target)
+    df, target_cols = prepare_evaluation_data(evaluate_config, model_metadata)
     df = df.dropna()
 
     X = df.drop(columns=target_cols)
@@ -47,8 +44,15 @@ def evaluate_model_sequence(evaluate_config: EvaluateConfig, model_name):
     y_pred_df.index = pd.to_datetime(y_pred_df.index)
 
     common_idx = y_aligned.index.intersection(y_pred_df.index)
-    y_true = y_aligned.loc[common_idx]
-    y_pred = y_pred_df.loc[common_idx]
+    valid_eval_idx = common_idx[(common_idx >= evaluate_config.start_date) & (common_idx <= evaluate_config.end_date)]
+
+    y_true = y_aligned.loc[valid_eval_idx]
+    y_pred = y_pred_df.loc[valid_eval_idx]
+
+    if y_true.empty:
+        raise ValueError(
+            f"No overlapping target data found within the requested evaluation window "
+            f"({evaluate_config.start_date} to {evaluate_config.end_date}). Check data alignment.")
 
     metrics_report = compute_multi_target_metrics(y_true, y_pred)
 

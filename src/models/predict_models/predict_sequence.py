@@ -3,7 +3,7 @@ import numpy as np
 from src.utils.config_utils import ensure
 from src.utils.logging_utils import get_logger
 
-from src.pipeline.build_dataset import build_input
+from src.pipeline.prepare_input_data import prepare_input_data
 from src.pipeline.create_sequences import create_sequences
 
 from src.config.predict_config import PredictConfig
@@ -56,6 +56,6 @@ def predict_sequence(predict_config):
     from src.models.registry import load_model
     return predict_sequence_by_parameters(
         load_model(predict_config.model_path),
-        build_input(predict_config)[metadata.selected_features],
+        prepare_input_data(predict_config)[metadata.selected_features],
         metadata.hyperparameters.get("seq_len", 20),
         metadata.target_cols)
