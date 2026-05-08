@@ -6,7 +6,7 @@ from src.utils.io_utils import list_contents, delete_directory
 
 from src.config.model_metadata import ModelMetadata
 
-from src.utils.gui_utils import get_feature_table
+from src.ui.components.feature_table import get_feature_table
 
 st.title("Model Registry")
     

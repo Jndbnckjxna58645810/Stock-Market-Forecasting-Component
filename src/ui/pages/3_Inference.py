@@ -20,12 +20,19 @@ if st.session_state.get('show_predict_widget'):
                 "end_date": end_date.strftime('%Y-%m-%d')
             })
                 
-            result = predict(config)
+            try:
+                result = predict(config)
                 
-            if result.size >= 5:
-                st.line_chart(result)
+                if result.size >= 5:
+                    st.line_chart(result)
+                    
+                st.table(pd.DataFrame(result))
                 
-            st.table(pd.DataFrame(result))
+            except ValueError as ve:
+                st.error(ve)
+            except Exception as e:
+                st.error(f"A critical error occurred: {e}")
+                st.exception(e)
 
     if st.button("Cancel"):
         st.session_state['show_predict_widget'] = False

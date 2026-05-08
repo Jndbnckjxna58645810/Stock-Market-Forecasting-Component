@@ -36,7 +36,6 @@ def load_data(data_type: str, data_config: dict, **kwargs) -> pd.DataFrame:
 
     return load_csv(path) if path.exists() else pd.DataFrame()
 
-
 def save_data(df: pd.DataFrame, data_type: str, data_config: dict, **kwargs) -> None:
     if df.empty or not data_config: return
         
