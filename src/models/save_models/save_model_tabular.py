@@ -20,14 +20,14 @@ def save_model_tabular(model_bundle, metadata, run: TrainConfig, model_config=No
         model_config = ModelConfig.from_name(run.model_config_path)
     model_config = ensure(model_config, ModelConfig)
 
-    m, t, i = metadata["model"]["name"], metadata["ticker"], metadata["interval"]
-    timestamp = metadata["created_at"]
+    m, t, i = metadata.model.name, metadata.ticker, metadata.interval
+    timestamp = metadata.created_at
 
     base_name = f"{m}_{t}_{i}_{timestamp}"
     directory = MODELS_DIR / base_name
     directory.mkdir(parents=True, exist_ok=True)
 
-    save_json(metadata, directory / "metadata.json")
+    save_json(metadata.to_dict(), directory / "metadata.json")
     joblib.dump(model_bundle["model"], directory / "model.pkl")
 
     x_scaler, y_scaler = model_bundle.get("x_scaler"), model_bundle.get("y_scaler")

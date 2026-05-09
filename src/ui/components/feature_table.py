@@ -5,10 +5,10 @@ from src.config.model_metadata import ModelMetadata
 from src.settings.config import *
 
 def get_feature_table(metadata):
-    macro_map = {m['name']: m['source'] for m in metadata.get('macro_features', [])}
+    macro_map = {m['name']: m['source'] for m in metadata.macro_features}
     
-    selected = metadata.get('selected_features', [])
-    importances = metadata.get('feature_importances') or {}
+    selected = metadata.selected_features
+    importances = metadata.feature_importances or {}
 
     table_data = []
     

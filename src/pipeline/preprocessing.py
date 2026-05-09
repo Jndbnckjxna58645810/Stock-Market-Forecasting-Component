@@ -65,8 +65,16 @@ def get_max_lookback_by_parameters(features):
 
     return max_lookback
 
-def get_max_horizon_by_parameters(target):
-    max_horizon = target["params"].get("horizon", 1)
-    if target["params"].get("horizons", 0):
-        max_horizon = max(target["params"].get("horizons", 1))
-    return max_horizon
+def get_max_horizon_by_parameters(target_configs):
+    if not target_configs: return 1
+        
+    all_horizons = []
+    for target in target_configs:
+        params = target.params
+
+        if "horizon" in params:
+            all_horizons.append(int(params["horizon"]))
+        if "horizons" in params and isinstance(params["horizons"], list):
+            all_horizons.extend(params["horizons"])
+            
+    return max(all_horizons) if all_horizons else 1

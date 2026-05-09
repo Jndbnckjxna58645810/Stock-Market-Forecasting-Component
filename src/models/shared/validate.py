@@ -17,9 +17,9 @@ def validate_models_compatible(evaluate_config: EvaluateConfig):
         models_metadata.append(m)
 
         message = (f" | Expected: ticker={evaluate_config.ticker}, " +
-                   f"interval={evaluate_config.interval}, target={evaluate_config.target}" +
+                   f"interval={evaluate_config.interval} | Targets must be in the same order" +
                    f" | Evaluation period: {evaluate_config.start_date} to {evaluate_config.end_date}" +
-                   f" | Actual: ticker={m.ticker}, interval={m.interval}, target={m.target}" +
+                   f" | Actual: ticker={m.ticker}, interval={m.interval}" +
                    f" | Training period: {m.start_date} to {m.end_date}")
 
         if m.ticker != evaluate_config.ticker:
@@ -30,11 +30,11 @@ def validate_models_compatible(evaluate_config: EvaluateConfig):
             logger.error(f"Interval mismatch for {model}{message}")
             raise ValueError(f"Interval mismatch for {model}{message}")
 
-        if m.target != evaluate_config.target:
+        if m.targets != evaluate_config.targets:
             logger.error(f"Target mismatch for {model}{message}")
             raise ValueError(f"Target mismatch for {model}{message}")
 
-        train_start, train_end = pd.to_datetime(m.start_date), pd.to_datetime(m.split["train_end"])
+        train_start, train_end = pd.to_datetime(m.start_date), pd.to_datetime(m.split.train_end)
         if (train_start <= pd.to_datetime(evaluate_config.end_date)) and (
             train_end >= pd.to_datetime(evaluate_config.start_date)):
             logger.error(f"Overlap with training data for {model}{message}")

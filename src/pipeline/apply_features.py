@@ -19,31 +19,24 @@ FEATURE_FUNCTIONS = {
 }
 
 def apply_features_by_parameters(df, features):
-    for feature in features:
+    for i, feature in enumerate(features):
         name = feature["name"]
         params = feature.get("params", {})
-        custom_name = feature.get("col_name")
 
         func = FEATURE_FUNCTIONS[name]
         result = func(df, **params)
 
+        param_str = "_".join(f"{k[0]}{v}" for k, v in params.items())
+        suffix = f"_{i}_{param_str}" if param_str else f"_{i}"
+
         if isinstance(result, tuple):
-            for i, col in enumerate(result):
-                col_name = (
-                    custom_name[i]
-                    if isinstance(custom_name, list)
-                    else f"{name}_{i}"
-                )
-                df[col_name] = col
-
-                logger.info(f"Feature applied: {col_name} from name '{name}' with parameters: {params}")
+            for j, col_data in enumerate(result):
+                col_name = f"{name}_{j}{suffix}"
+                df[col_name] = col_data
+                logger.info(f"Feature applied: {col_name}")
         else:
-            if custom_name: col_name = custom_name
-            else:
-                suffix = "_".join(str(v) for v in params.values()) if params else ""
-                col_name = f"{name}_{suffix}" if suffix else name
+            col_name = f"{name}{suffix}"
             df[col_name] = result
-
-            logger.info(f"Feature applied: {col_name} from name '{name}' with parameters: {params}")
+            logger.info(f"Feature applied: {col_name}")
             
     return df

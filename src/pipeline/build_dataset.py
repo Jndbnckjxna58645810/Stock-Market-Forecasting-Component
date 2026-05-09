@@ -12,11 +12,11 @@ from src.pipeline.preprocessing import handle_missing, get_max_lookback_by_param
 logger = get_logger("pipeline.build_dataset")
 
 def build_dataset_by_parameters(ticker, start_date, end_date, interval,
-                                features, macro_features, target,
+                                features, macro_features, targets,
                                 hyperparameters, data_config=None):
     lookback_days = convert_bars_to_days((hyperparameters.get("seq_len", 0) * 2
                                           + get_max_lookback_by_parameters(features)), interval)
-    lookforward_days = convert_bars_to_days(get_max_horizon_by_parameters(target), interval)
+    lookforward_days = convert_bars_to_days(get_max_horizon_by_parameters(targets), interval)
     
     effective_start = pd.to_datetime(start_date) - pd.DateOffset(days=lookback_days)
     effective_end = pd.to_datetime(end_date) + pd.DateOffset(days=lookforward_days)

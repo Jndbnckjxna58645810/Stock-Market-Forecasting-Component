@@ -1,4 +1,4 @@
-from src.pipeline.apply_targets import apply_target_by_parameters
+from src.pipeline.apply_targets import apply_targets_by_parameters
 from src.pipeline.build_dataset import build_dataset_by_parameters
 
 from src.utils.config_utils import ensure
@@ -17,8 +17,8 @@ def prepare_training_data(run: TrainConfig, model_config: ModelConfig):
         model_config = ModelConfig.from_name(run.model_config_path)
 
     df = load_data(
-        "processed", run.data_config, 
-        ticker=run.ticker, start_date=run.start_date, end_date=run.end_date, interval=run.interval,
+        "processed" ,run.data, ticker=run.ticker,
+        start_date=run.start_date, end_date=run.end_date, interval=run.interval,
         features=model_config.features, macro_features=model_config.macro_features)
     
     if df.empty:
@@ -28,10 +28,10 @@ def prepare_training_data(run: TrainConfig, model_config: ModelConfig):
             run.start_date, run.end_date,
             run.interval,
             model_config.features, model_config.macro_features,
-            model_config.target,
-            model_config.hyperparameters)
+            model_config.targets,
+            model_config.model.hyperparameters, run.data)
     
-    save_data(df, "processed", run.data_config, ticker=run.ticker,
+    save_data(df, "processed", run.data, ticker=run.ticker,
               start_date=run.start_date, end_date=run.end_date, interval=run.interval,
               features=model_config.features, macro_features=model_config.macro_features)
     
@@ -41,16 +41,16 @@ def prepare_training_data(run: TrainConfig, model_config: ModelConfig):
                     f" | Features from configuration file: {run.model_config_path}"
                     if run.model_config_path else ""))
 
-    df, target_cols = apply_target_by_parameters(df, model_config.target)
+    df, target_cols = apply_targets_by_parameters(df, model_config.targets)
     df = df.dropna()
 
     X = df.drop(columns=target_cols)
     y = df[target_cols]
 
-    train_end = run.split["train_end"]
-    val_end = run.split.get("val_end") or train_end
+    train_end = run.split.train_end
+    val_end = run.split.val_end or train_end
 
-    if not run.split.get("val_end"):
+    if not run.split.val_end:
         logger.warning(f"val_end not specified | val_end set to train_end: {val_end}")
 
     X_train = X.loc[:train_end]

@@ -14,14 +14,14 @@ if st.session_state.get('show_predict_widget'):
 
     if st.button("Generate Forecast"):
         with st.spinner("Calculating..."):
-            config = PredictConfig({
-                "model_path": st.session_state['active_model'],
-                "start_date": start_date.strftime('%Y-%m-%d'), 
-                "end_date": end_date.strftime('%Y-%m-%d')
-            })
+            config = PredictConfig(
+                model_path=st.session_state['active_model'],
+                start_date=start_date.strftime('%Y-%m-%d'), 
+                end_date=end_date.strftime('%Y-%m-%d')
+            )
                 
             try:
-                result = predict(config)
+                result = predict(config)[config.start_date:config.end_date]
                 
                 if result.size >= 5:
                     st.line_chart(result)

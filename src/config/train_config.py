@@ -1,27 +1,31 @@
-from src.config.base_config import BaseConfig
+from dataclasses import dataclass, field, asdict
+from typing import List, Dict, Any, Optional
+
+from src.config.file_resolvable import FileResolvable
+from src.config.common import SplitConfig, DataStrategy
 
 from src.settings.config import TRAIN_CONFIG_DIR
 
-class TrainConfig(BaseConfig):
+@dataclass
+class TrainConfig(FileResolvable):
     CLASS_DIR = TRAIN_CONFIG_DIR
+    
+    ticker: str
+    start_date: str
+    end_date: str
+    interval: str
+    model_config_path: str
+    split: SplitConfig = field(default_factory=SplitConfig)
+    data: DataStrategy = field(default_factory=DataStrategy)
 
-    @property
-    def ticker(self): return self._data["ticker"]
-
-    @property
-    def start_date(self): return self._data["start_date"]
-
-    @property
-    def end_date(self): return self._data["end_date"]
-
-    @property
-    def interval(self): return self._data["interval"]
-
-    @property
-    def split(self): return self._data.get("split", {})
-
-    @property
-    def data_config(self): return self._data.get("data", {})
-
-    @property
-    def model_config_path(self): return self._data["model_config_path"]
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        return cls(
+            ticker=data.get("ticker"),
+            start_date=data.get("start_date"),
+            end_date=data.get("end_date"),
+            interval=data.get("interval"),
+            model_config_path=data.get("model_config_path"),
+            split=SplitConfig(**data.get("split", {})),
+            data=DataStrategy(**data.get("data", {}))
+        )

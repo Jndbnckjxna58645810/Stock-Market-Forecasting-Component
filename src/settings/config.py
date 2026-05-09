@@ -4,6 +4,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import numpy as np
+import random
+import os
+
+def set_global_seed(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 FRED_API_KEY = os.getenv("FRED_API_KEY")
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")

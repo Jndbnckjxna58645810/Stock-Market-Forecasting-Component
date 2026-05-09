@@ -53,9 +53,11 @@ def predict_sequence(predict_config):
     logger.info(f"Predicting using {predict_config.model_path}" +
                 f" | Period: {predict_config.start_date} to {predict_config.end_date}")
 
+    logger.info(prepare_input_data(predict_config))
+
     from src.models.registry import load_model
     return predict_sequence_by_parameters(
         load_model(predict_config.model_path),
         prepare_input_data(predict_config)[metadata.selected_features],
-        metadata.hyperparameters.get("seq_len", 20),
+        metadata.model.hyperparameters.get("seq_len", 20),
         metadata.target_cols)

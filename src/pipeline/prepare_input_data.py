@@ -13,5 +13,5 @@ def prepare_input_data(predict_config: PredictConfig):
         predict_config.start_date, predict_config.end_date,
         model_metadata.interval,
         model_metadata.features, model_metadata.macro_features,
-        model_metadata.target,
-        model_metadata.hyperparameters)
+        model_metadata.targets,
+        model_metadata.model.hyperparameters)

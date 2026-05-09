@@ -20,8 +20,8 @@ def save_model_sequence(model_bundle, metadata, run: TrainConfig, model_config=N
         model_config = ModelConfig.from_name(run.model_config_path)
     model_config = ensure(model_config, ModelConfig)
 
-    m, t, i = metadata["model"]["name"], metadata["ticker"], metadata["interval"]
-    timestamp = metadata["created_at"]
+    m, t, i = metadata.model.name, metadata.ticker, metadata.interval
+    timestamp = metadata.created_at
 
     base_name = f"{m}_{t}_{i}_{timestamp}"
     directory = MODELS_DIR / base_name
@@ -32,7 +32,7 @@ def save_model_sequence(model_bundle, metadata, run: TrainConfig, model_config=N
     joblib.dump(model_bundle["x_scaler"], directory / "x_scaler.pkl")
     joblib.dump(model_bundle["y_scaler"], directory / "y_scaler.pkl")
 
-    save_json(metadata, directory / "metadata.json")
+    save_json(metadata.to_dict(), directory / "metadata.json")
 
     logger.info(f"Model saved to directory {base_name} | Full path: {directory}")
 

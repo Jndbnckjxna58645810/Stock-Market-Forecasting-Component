@@ -1,15 +1,22 @@
-from src.config.base_config import BaseConfig
+from dataclasses import dataclass, field
+from typing import Dict, Any
 
 from src.settings.config import PREDICTION_CONFIG_DIR
 
-class PredictConfig(BaseConfig):
+from src.config.file_resolvable import FileResolvable
+
+@dataclass
+class PredictConfig(FileResolvable):
     CLASS_DIR = PREDICTION_CONFIG_DIR
+    
+    start_date: str
+    end_date: str
+    model_path: str
 
-    @property
-    def start_date(self): return self._data["start_date"]
-
-    @property
-    def end_date(self): return self._data["end_date"]
-
-    @property
-    def model_path(self): return self._data["model_path"]
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        return cls(
+            start_date=data.get("start_date"),
+            end_date=data.get("end_date"),
+            model_path=data.get("model_path")
+        )

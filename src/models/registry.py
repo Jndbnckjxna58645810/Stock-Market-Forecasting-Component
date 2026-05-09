@@ -46,7 +46,7 @@ def evaluate_models(evaluate_config: EvaluateConfig):
     results = {}
     for m_name in evaluate_config.models:
         metadata = ModelMetadata.from_name(m_name)
-        m_type = metadata.model["name"]
+        m_type = metadata.model.name
 
         logger.info(f"Evaluation started | Model: {m_name} | Type: {m_type}")
 
@@ -66,14 +66,14 @@ def predict(predict_config: PredictConfig):
     predict_config = ensure(predict_config, PredictConfig)
     model_metadata = ModelMetadata.from_name(predict_config.model_path)
 
-    logger.info(f"Prediction started | Model: {predict_config.model_path} | Type: {model_metadata.model['name']}")
+    logger.info(f"Prediction started | Model: {predict_config.model_path} | Type: {model_metadata.model.name}")
 
-    if not STRATEGIES.get(model_metadata.model['name']):
-            logger.error(f"Prediction failed | Unknown model type: {model_metadata.model['name']}")
+    if not STRATEGIES.get(model_metadata.model.name):
+            logger.error(f"Prediction failed | Unknown model type: {model_metadata.model.name}")
 
-            raise ValueError(f"Prediction failed | Unknown model type: {model_metadata.model['name']}")
+            raise ValueError(f"Prediction failed | Unknown model type: {model_metadata.model.name}")
 
-    strategy = STRATEGIES[model_metadata.model["name"]]["predictor"]
+    strategy = STRATEGIES[model_metadata.model.name]["predictor"]
 
     result = strategy(predict_config)
 
@@ -82,14 +82,14 @@ def predict(predict_config: PredictConfig):
 def load_model(name):
     model_metadata = ModelMetadata.from_name(name)
 
-    logger.info(f"Loading model | Model: {name} | Type: {model_metadata.model['name']}")
+    logger.info(f"Loading model | Model: {name} | Type: {model_metadata.model.name}")
 
-    if not STRATEGIES.get(model_metadata.model['name']):
-            logger.error(f"Model loading failed | Unknown model type: {model_metadata.model['name']}")
+    if not STRATEGIES.get(model_metadata.model.name):
+            logger.error(f"Model loading failed | Unknown model type: {model_metadata.model.name}")
 
-            raise ValueError(f"Model loading failed | Unknown model type: {model_metadata.model['name']}")
+            raise ValueError(f"Model loading failed | Unknown model type: {model_metadata.model.name}")
 
-    strategy = STRATEGIES[model_metadata.model["name"]]["loader"]
+    strategy = STRATEGIES[model_metadata.model.name]["loader"]
     return strategy(name)
 
 def save_model(model, metadata, run: TrainConfig, model_config=None):
@@ -100,14 +100,14 @@ def save_model(model, metadata, run: TrainConfig, model_config=None):
 
     logger.info(f"Saving model" + (
         f" | Model configuration: {run.model_config_path}" if run.model_config_path else "") +
-        f" | Type: {model_config.model['name']}")
+        f" | Type: {model_config.model.name}")
     
-    if not STRATEGIES.get(model_config.model['name']):
-            logger.error(f"Model saving failed | Unknown model type: {model_config.model['name']}")
+    if not STRATEGIES.get(model_config.model.name):
+            logger.error(f"Model saving failed | Unknown model type: {model_config.model.name}")
 
-            raise ValueError(f"Model saving failed | Unknown model type: {model_config.model['name']}")
+            raise ValueError(f"Model saving failed | Unknown model type: {model_config.model.name}")
 
-    strategy = STRATEGIES[model_config.model["name"]]["saver"]
+    strategy = STRATEGIES[model_config.model.name]["saver"]
     return strategy(model, metadata, run, model_config)
 
 def train(run: TrainConfig, model_config=None):
@@ -119,12 +119,12 @@ def train(run: TrainConfig, model_config=None):
 
     logger.info(f"Training model" + (
         f" | Model configuration: {run.model_config_path}" if run.model_config_path else "") +
-        f" | Type: {model_config.model['name']}")
+        f" | Type: {model_config.model.name}")
 
-    if not STRATEGIES.get(model_config.model['name']):
-            logger.error(f"Training failed | Unknown model type: {model_config.model['name']}")
+    if not STRATEGIES.get(model_config.model.name):
+            logger.error(f"Training failed | Unknown model type: {model_config.model.name}")
 
-            raise ValueError(f"Training failed | Unknown model type: {model_config.model['name']}")
+            raise ValueError(f"Training failed | Unknown model type: {model_config.model.name}")
 
-    strategy = STRATEGIES[model_config.model["name"]]["trainer"]
+    strategy = STRATEGIES[model_config.model.name]["trainer"]
     return strategy(run, model_config)

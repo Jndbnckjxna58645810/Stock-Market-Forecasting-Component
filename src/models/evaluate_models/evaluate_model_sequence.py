@@ -27,7 +27,7 @@ def evaluate_model_sequence(evaluate_config: EvaluateConfig, model_name):
     X = X[model_metadata.selected_features]
     y = df[target_cols]
 
-    seq_len = model_metadata.hyperparameters["seq_len"]
+    seq_len = model_metadata.model.hyperparameters["seq_len"]
 
     y_aligned = y.iloc[seq_len:]
 

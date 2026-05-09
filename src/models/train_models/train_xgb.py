@@ -11,6 +11,9 @@ from src.utils.logging_utils import get_logger
 
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
+from src.config.model_metadata import ModelMetadata
+
+from src.settings.config import set_global_seed
 
 logger = get_logger("models.train_models.train_xgb")
 
@@ -25,6 +28,8 @@ def train_xgb(run: TrainConfig, model_config=None):
                 f" | Interval: {run.interval}" + (
                     f" | Parameters from configuration file: {run.model_config_path}"
                     if run.model_config_path else ""))
+
+    set_global_seed(model_config.model.hyperparameters.get("seed", 42))
 
     data = prepare_training_data(run, model_config)
 
@@ -44,7 +49,7 @@ def train_xgb(run: TrainConfig, model_config=None):
     logger.info(f"Columns dropped based on correlation: {', '.join(to_drop)}")
 
     import xgboost as xgb
-    model = xgb.XGBRegressor(**model_config.model["params"])
+    model = xgb.XGBRegressor(**model_config.model.params)
 
     if (X_val is not None) and (len(X_val) > 0):
         model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
@@ -74,34 +79,26 @@ def train_xgb(run: TrainConfig, model_config=None):
 
     logger.info(f"XGB Model training completed")
 
-    metadata = {
-        "ticker": run.ticker,
-        "start_date": run.start_date,
-        "end_date": run.end_date,
-        "interval": run.interval,
+    metadata = ModelMetadata(
+        ticker=run.ticker,
+        start_date=run.start_date, end_date=run.end_date,
+        interval=run.interval,
+        split=run.split,
 
-        "split": run.split,
+        features=model_config.features,
+        selected_features=selected,
+        macro_features=model_config.macro_features,
 
-        "features": model_config.features,
-        "selected_features": selected,
-        "macro_features": model_config.macro_features,
+        targets=model_config.targets, target_cols=target_cols,
 
-        "target": model_config.target,
-        "target_cols": target_cols,
+        model=model_config.model,
 
-        "hyperparameters": model_config.hyperparameters,
+        metrics=compute_multi_target_metrics(y_true, y_pred),
+        feature_importances=importances.to_dict(),
 
-        "model": model_config.model,
-
-        "metrics": compute_multi_target_metrics(y_true, y_pred),
-
-        "feature_importances": importances.to_dict(),
-
-        "n_rows": len(df),
-        "created_at": dt.datetime.now().strftime("%Y%m%d_%H%M%S"),
-
-        "model_config_path": run.model_config_path,
-    }
+        n_rows=len(df),
+        created_at=dt.datetime.now().strftime("%Y%m%d_%H%M%S"),
+        model_config_path=run.model_config_path)
 
     from src.models.registry import save_model
     return save_model({"model": model, "x_scaler": None, "y_scaler": None},

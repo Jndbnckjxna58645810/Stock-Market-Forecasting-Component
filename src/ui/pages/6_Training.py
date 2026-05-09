@@ -2,8 +2,12 @@ import streamlit as st
 from datetime import datetime, date
 
 from src.settings.config import MODELS_CONFIG_DIR
+
 from src.utils.io_utils import list_contents
+
 from src.config.train_config import TrainConfig
+from src.config.common import SplitConfig, DataStrategy
+
 from src.models.registry import train
 
 st.title("Training Lab")
@@ -68,21 +72,19 @@ with st.form("training_form"):
             st.warning(f"The training period looks very short: {delta_days}.")
 
         with st.spinner("Calculating..."):
-            model_path = train(TrainConfig({
-                "ticker": ticker,
-                "start_date": str(start_date),
-                "end_date": str(end_date),
-                "interval": interval,
-                "split": {
-                    "type": "date",
-                    "train_end": str(train_end),
-                    "val_end": str(val_end)
-                },
-                "data": {
-                    "technical": {"save": t_save, "force_download": t_force},
-                    "macro": {"save": m_save, "force_download": m_force},
-                    "processed": {"save": p_save, "force_download": p_force}
-                },
-                "model_config_path": selected_blueprint}))
+            model_path = train(TrainConfig(
+                ticker=ticker,
+                start_date=str(start_date),
+                end_date=str(end_date),
+                interval=interval,
+                split=SplitConfig(
+                    type="date",
+                    train_end=str(train_end),
+                    val_end=str(val_end)),
+                data=DataStrategy(
+                    technical={"save": t_save, "force_download": t_force},
+                    macro={"save": m_save, "force_download": m_force},
+                    processed={"save": p_save, "force_download": p_force}),
+                model_config_path=selected_blueprint))
         
         st.success(f"Trained model saved to {model_path}")        

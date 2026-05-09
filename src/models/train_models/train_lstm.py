@@ -17,6 +17,7 @@ from src.utils.logging_utils import get_logger
 
 from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
+from src.config.model_metadata import ModelMetadata
 
 logger = get_logger("models.train_models.train_lstm")
 
@@ -26,7 +27,7 @@ def train_lstm(run: TrainConfig, model_config=None):
         if run.model_config_path is None: raise ValueError("Training requires model_config")
         model_config = ModelConfig.from_name(run.model_config_path)
 
-    hp = model_config.hyperparameters
+    hp = model_config.model.hyperparameters
     seq_len = hp.get("seq_len", 20)
     units = hp.get("units", 64)
     epochs = hp.get("epochs", 10)
@@ -101,35 +102,27 @@ def train_lstm(run: TrainConfig, model_config=None):
 
     logger.info(f"LSTM Model training completed")
 
-    metadata = {
-        "ticker": run.ticker,
-        "start_date": run.start_date,
-        "end_date": run.end_date,
-        "interval": run.interval,
+    metadata = ModelMetadata(
+        ticker=run.ticker,
+        start_date=run.start_date, end_date=run.end_date,
+        interval=run.interval,
+        split=run.split,
 
-        "split": run.split,
-
-        "features": model_config.features,
-        "selected_features": data["df"].drop(
+        features=model_config.features,
+        selected_features=data["df"].drop(
             columns=data["target_cols"]).columns.tolist(),
-        "macro_features": model_config.macro_features,
+        macro_features=model_config.macro_features,
 
-        "target": model_config.target,
-        "target_cols": data["target_cols"],
+        targets=model_config.targets, target_cols=data["target_cols"],
 
-        "hyperparameters": model_config.hyperparameters,
+        model=model_config.model,
 
-        "model": model_config.model,
+        metrics=compute_multi_target_metrics(y_true, y_pred),
+        feature_importances=None,
 
-        "metrics": compute_multi_target_metrics(y_true, y_pred),
-
-        "feature_importances": None,
-
-        "n_rows": len(data["df"]),
-        "created_at": dt.datetime.now().strftime("%Y%m%d_%H%M%S"),
-
-        "model_config_path": run.model_config_path,
-    }
+        n_rows=len(data["df"]),
+        created_at=dt.datetime.now().strftime("%Y%m%d_%H%M%S"),
+        model_config_path=run.model_config_path)
 
     from src.models.registry import save_model
     return save_model({"model": model, "x_scaler": x_scaler, "y_scaler": y_scaler},

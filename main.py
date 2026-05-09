@@ -2,9 +2,16 @@ from src.config.train_config import TrainConfig
 from src.config.model_config import ModelConfig
 from src.config.evaluate_config import EvaluateConfig
 from src.config.predict_config import PredictConfig
+from src.config.common import *
 from src.models.registry import evaluate_models, train, predict
+from src.data.technical import load_technical_by_parameters
+from src.data.macro import load_macro_by_parameters
+from src.pipeline.apply_features import apply_features_by_parameters
+from src.pipeline.apply_targets import apply_targets_by_parameters
+from src.pipeline.preprocessing import merge_and_align_datasets
+from src.config.common import TargetConfig
 
-model_config_for_later = ModelConfig({
+model_config_for_later = ModelConfig.from_dict({
   "features": [
     {"name": "sma", "params": {"window": 20}},
     {"name": "sma", "params": {"window": 50}},
@@ -33,61 +40,11 @@ model_config_for_later = ModelConfig({
     {"name": "zscore_close", "params": {"window": 50}}
   ],
 
-  "target": {
-    "name": "multi_return",
-    "params": {"horizons": [1,2,3,5]}
-  },
-
-  "macro_features": [
-    {"name": "interest_rate", "source": "FEDFUNDS"},
-    {"name": "inflation", "source": "CPIAUCSL"},
-    {"name": "unemployment", "source": "UNRATE"}
+  "targets": [
+      {"name": "multi_return", "params": {"horizons": [1,2,3,5]}},
+      {"name": "multi_return", "params": {"horizons": [10]}},
+      {"name": "return", "params": {"horizon": 1, "smoothing": 1, "log": False}}
   ],
-
-  "hyperparameters": {},
-
-  "model": {
-    "name": "rf",
-    "params": {
-      "n_estimators": 100,
-      "max_depth": 3
-    }
-  }
-})
-
-model_config_2 = ModelConfig({
-  "features": [
-    {"name": "sma", "params": {"window": 20}},
-    {"name": "sma", "params": {"window": 50}},
-    {"name": "ema", "params": {"window": 20}},
-    {"name": "ema", "params": {"window": 50}},
-    {"name": "momentum", "params": {"window": 5}},
-    {"name": "volatility", "params": {"window": 10}},
-    {"name": "volatility_ratio", "params": {}},
-    {"name": "rsi", "params": {"window": 14}},
-    {"name": "macd", "params": {}, "col_name": ["macd_line", "macd_signal"]},
-    {"name": "macd_hist", "params": {}},
-    {"name": "log_return", "params": {}},
-    {"name": "range", "params": {}},
-    {"name": "hl_position", "params": {}},
-    {"name": "volume_change", "params": {}},
-    {"name": "volume_sma", "params": {"window": 10}},
-    {"name": "volume_ratio", "params": {}},
-    {"name": "dist_sma", "params": {"window": 20}},
-    {"name": "dist_sma", "params": {"window": 50}},
-    {"name": "rolling_max", "params": {"window": 10}},
-    {"name": "rolling_min", "params": {"window": 10}},
-    {"name": "breakout_up", "params": {}},
-    {"name": "breakout_down", "params": {}},
-    {"name": "day_of_week", "params": {}},
-    {"name": "month", "params": {}},
-    {"name": "zscore_close", "params": {"window": 50}}
-  ],
-
-  "target": {
-    "name": "multi_return",
-    "params": {"horizons": [1,2,3,5]}
-  },
 
   "macro_features": [
     {"name": "interest_rate", "source": "FEDFUNDS"},
@@ -102,120 +59,97 @@ model_config_2 = ModelConfig({
     "params": {
       "n_estimators": 100,
       "max_depth": 3,
-      "learning_rate": 0.1
+      "learning_rate": 0.001
     }
   }
 })
 
-model_config_3 = ModelConfig({
-  "features": [
-    {"name": "sma", "params": {"window": 20}},
-    {"name": "sma", "params": {"window": 50}},
-    {"name": "ema", "params": {"window": 20}},
-    {"name": "ema", "params": {"window": 50}},
-    {"name": "momentum", "params": {"window": 5}},
-    {"name": "volatility", "params": {"window": 10}},
-    {"name": "volatility_ratio", "params": {}},
-    {"name": "rsi", "params": {"window": 14}},
-    {"name": "macd", "params": {}, "col_name": ["macd_line", "macd_signal"]},
-    {"name": "macd_hist", "params": {}},
-    {"name": "log_return", "params": {}},
-    {"name": "range", "params": {}},
-    {"name": "hl_position", "params": {}},
-    {"name": "volume_change", "params": {}},
-    {"name": "volume_sma", "params": {"window": 10}},
-    {"name": "volume_ratio", "params": {}},
-    {"name": "dist_sma", "params": {"window": 20}},
-    {"name": "dist_sma", "params": {"window": 50}},
-    {"name": "rolling_max", "params": {"window": 10}},
-    {"name": "rolling_min", "params": {"window": 10}},
-    {"name": "breakout_up", "params": {}},
-    {"name": "breakout_down", "params": {}},
-    {"name": "day_of_week", "params": {}},
-    {"name": "month", "params": {}},
-    {"name": "zscore_close", "params": {"window": 50}}
-  ],
+# print(model_config_for_later.features)
+# print(model_config_for_later.model.name)
 
-  "target": {
-    "name": "multi_return",
-    "params": {"horizons": [1,2,3,5]}
-  },
+model_config_new = ModelConfig(
+    features=[
+        {"name": "sma", "params": {"window": 20}},
+        {"name": "sma", "params": {"window": 50}},
+        {"name": "ema", "params": {"window": 20}},
+        {"name": "ema", "params": {"window": 50}}],
+    targets=[
+        TargetConfig(name="multi_return", params={"horizons": [1,2,3,5]}),
+        TargetConfig(name="multi_return", params={"horizons": [4]}),
+        TargetConfig(name="return", params={"horizon": 1, "smoothing": 1, "log": False})
+      ],
+    model=ModelSettings(
+        name="xgb",
+        params={"n_estimators": 100,"max_depth": 3, "learning_rate": 0.001},
+        hyperparameters={}),
+    macro_features=[
+        {"name": "interest_rate", "source": "FEDFUNDS"},
+        {"name": "inflation", "source": "CPIAUCSL"},
+        {"name": "unemployment", "source": "UNRATE"}])
 
-  "hyperparameters": {
-    "seq_len": 20,
-    "epochs": 10,
-    "units": 64,
-    "batch_size": 32,
-    "dropout": 0.2,
-    "learning_rate": 0.001
-  },
-  
-  "macro_features": [
-    {"name": "interest_rate", "source": "FEDFUNDS"},
-    {"name": "inflation", "source": "CPIAUCSL"},
-    {"name": "unemployment", "source": "UNRATE"}
-  ],
+# print(model_config_new.features)
+# print(model_config_for_later.model.name)
 
-  "model": {
-    "name": "lstm"
-  }
-})
-
-train_config = TrainConfig({
-  "ticker": "MSFT",
-  "start_date": "1990-01-01",
-  "end_date": "2020-01-01",
+train_config = TrainConfig.from_dict({
+  "mode": "train",
+  "ticker": "AAPL",
+  "start_date": "2000-01-01",
+  "end_date": "2025-01-01",
   "interval": "1d",
 
   "split": {
     "type": "date",
-    "train_end": "2010-01-01",
-    "val_end": "2015-01-01"
+    "train_end": "2020-01-01",
+    "val_end": "2022-01-01"
   },
 
   "data": {
   "technical": {
       "save": True,
-      "path": None,
       "force_download": False
     },
     "macro": {
       "save": True,
-      "path": None,
       "force_download": False
     },
     "processed": {
       "save": True,
-      "path": None,
-      "force_download": True
+      "force_download": False
     }
   },
 
-  "model_config_path": None
+  "model_config_path": "lstm_multi_return.json"
 })
 
-# train("rf_AAPL_other.json")
+# technical_raw = load_technical_by_parameters(
+#     train_config.ticker, train_config.start_date, train_config.end_date, train_config.interval)
 
-# train("lstm_example.json")
+# print(technical_raw)
 
-# print(predict(PredictConfig({
-#     "model_path": "rf_AAPL_1d_20260505_104438",
-#     "start_date": "2026-05-04",
-#     "end_date": "2026-05-04"
-# })))
+# macro_raw = load_macro_by_parameters(
+#     model_config_new.macro_features, train_config.start_date, train_config.end_date)
 
-# print(evaluate_models(EvaluateConfig({
-#   "models": ["xgb_AAPL_1d_20260504_183548", "rf_AAPL_1d_20260504_183550", "lstm_AAPL_1d_20260505_121044"],
-#   "ticker": "AAPL",
-#   "start_date": "2025-01-01",
-#   "end_date": "2026-01-01",
-#   "interval": "1d",
-#   "target": {
-#     "name": "multi_return",
-#     "params": {"horizons": [1,2,3,5]}
-#   }
-# })))
+# print(macro_raw)
 
-#train("lstm_example.json")
+# df = merge_and_align_datasets(technical_raw, macro_raw)
+# df = apply_features_by_parameters(df, model_config_new.features)
 
-train(train_config, model_config_2)
+# print(df)
+
+# df = apply_targets_by_parameters(df, model_config_new.targets)
+
+# print(df)
+
+#train(train_config, model_config_for_later)
+
+#train("ex_LSTM_GOOGL_2010-01-01_2025-01-01_1d.json")
+
+name = train(train_config, model_config_for_later)
+
+print(predict(PredictConfig("2026-01-01", "2026-02-01", name)))
+
+# print(evaluate_models(EvaluateConfig(["rf_AAPL_1d_20260509_173212"], "AAPL", "2025-01-01", "2026-01-01", "1d", [
+#     TargetConfig(name="multi_return", params={"horizons": [1,2,3,5]}),
+#     TargetConfig(name="multi_return", params={"horizons": [4]}),
+#     TargetConfig(name="return", params={"horizon": 1, "smoothing": 1, "log": False})
+# ])))
