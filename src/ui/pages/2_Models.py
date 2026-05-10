@@ -8,6 +8,8 @@ from src.config.model_metadata import ModelMetadata
 
 from src.ui.components.render_model_card import render_model_card
 
-st.title("Model Registry")
+st.set_page_config(layout="wide", page_title="Financial AI Lab")
+
+st.title("🧠 Model Registry")
     
 for m_name in list_contents(MODELS_DIR): render_model_card(m_name)

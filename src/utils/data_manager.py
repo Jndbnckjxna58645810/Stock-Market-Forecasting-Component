@@ -40,7 +40,7 @@ def load_data(data_type: str, data_config: dict, **kwargs) -> pd.DataFrame:
     return load_csv(path) if path.exists() else pd.DataFrame()
 
 def save_data(df: pd.DataFrame, data_type: str, data_config: dict, **kwargs) -> None:
-    if df is None or df.empty:
+    if df is None or df.empty or data_config == None:
         logger.warning(f"Attempted to save empty {data_type} DataFrame. Skipping.")
         return
     

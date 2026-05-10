@@ -22,7 +22,7 @@ class ModelMetadata(FileResolvable):
     selected_features: List[str]
     macro_features: List[Dict]
 
-    model: Dict[str, Any]
+    model: ModelSettings
     model_config_path: str
 
     targets: List[TargetConfig]

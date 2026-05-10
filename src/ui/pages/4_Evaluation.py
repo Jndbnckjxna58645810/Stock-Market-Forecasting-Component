@@ -9,27 +9,29 @@ from src.config.model_metadata  import ModelMetadata
 from src.ui.components.model_filter import get_filter_options, get_valid_models
 from src.ui.components.render_model_card import render_model_card
 
+st.set_page_config(layout="wide", page_title="Financial AI Lab")
+
 # --- STEP 1: INITIALIZATION ---
 if 'valid_models' not in st.session_state: st.session_state['valid_models'] = []
 if 'selected_models' not in st.session_state: st.session_state['selected_models'] = []
 
 # --- STEP 2: THE SELECTORS ---
-st.title("Model Evaluation")
+st.title("🔬 Model Evaluation")
 
 tickers, intervals, target_map = get_filter_options()
 
 c1, c2, c3 = st.columns(3)
-ticker = c1.selectbox("Ticker", tickers)
-interval = c2.selectbox("Interval", intervals)
+ticker = c1.selectbox("⚙️ Ticker", tickers)
+interval = c2.selectbox("🛠️ Interval", intervals)
 
 # target_map keys are the "Pretty Strings" of the whole target list
-selected_target_str = c3.selectbox("Target Configuration", options=list(target_map.keys()))
+selected_target_str = c3.selectbox("🎯 Target Configuration", options=list(target_map.keys()))
 selected_target_list = target_map[selected_target_str] # This is our List[TargetConfig]
 
-eval_period = st.date_input("Evaluation Period", [])
+eval_period = st.date_input("📅 Evaluation Period", [])
 
 # --- STEP 3: FILTERING ---
-if st.button("Find Compatible Models"):
+if st.button("🔍 Find Compatible Models"):
     if len(eval_period) == 2:
         # We pass the WHOLE LIST to filter models
         st.session_state['valid_models'] = get_valid_models(
@@ -45,7 +47,7 @@ valid_names = st.session_state['valid_models']
 selected_set = st.session_state['selected_models']
 
 if selected_set:
-    st.subheader("Selected Models")
+    st.subheader("🧠 Selected Models")
     for model in selected_set:
         render_model_card(model, mode="evaluate", is_selected=True)
 
@@ -53,7 +55,7 @@ if selected_set:
 # (User adds names to st.session_state['selected_models'])
 
 # --- STEP 5: EVALUATION ---
-if st.button("Run Evaluation", type="primary"):
+if st.button("🚀 Run Evaluation", type="primary"):
     config = EvaluateConfig(
         models=st.session_state['selected_models'],
         ticker=ticker,
@@ -66,10 +68,10 @@ if st.button("Run Evaluation", type="primary"):
 
 if valid_names:
     st.divider()
-    st.subheader("Available Models")
+    st.subheader("🧠 Available Models")
     available = [m for m in valid_names if m not in selected_set]
     if not available and not selected_set:
-        st.info("No models match the filters.")
+        st.info("🔄 No models match the filters.")
     for m_name in available:
         render_model_card(m_name, mode="evaluate", is_selected=False)
 
@@ -78,14 +80,14 @@ if 'eval_results' in st.session_state:
     results = st.session_state['eval_results']
     
     st.divider()
-    st.header("Comparative Metrics")
+    st.header("📊 Comparative Metrics")
 
     overall_metrics = {}
     for m_name, data in results.items():
         overall_metrics[m_name] = data['metrics']['overall']
 
     metrics_df = pd.DataFrame(overall_metrics)
-    st.subheader("Global Performance Summary")
+    st.subheader("📊 Global Performance Summary")
     st.dataframe(metrics_df, use_container_width=True)
 
     first_model = list(results.keys())[0]
@@ -93,7 +95,7 @@ if 'eval_results' in st.session_state:
 
     for col in target_cols:
         st.markdown(f"---")
-        st.subheader(f"Target Feature: **{col}**")
+        st.subheader(f"🎯 Target Feature: **{col}**")
 
         col_metrics = {}
         for m_name in results:
@@ -101,7 +103,7 @@ if 'eval_results' in st.session_state:
                 col_metrics[m_name] = results[m_name]['metrics']['breakdown'][col]
                 
         if col_metrics:
-            st.markdown("**Feature Specific Errors:**")
+            st.markdown("**📊 Feature Specific Errors:**")
             st.dataframe(pd.DataFrame(col_metrics), use_container_width=True)
 
         plot_df = pd.DataFrame(index=results[first_model]['y_true'].index)
@@ -112,5 +114,5 @@ if 'eval_results' in st.session_state:
 
         plot_df = plot_df.dropna()
         
-        st.markdown("**Visualizing Alignment:**")
+        st.markdown("**📊 Visualizing Alignment:**")
         st.line_chart(plot_df)
