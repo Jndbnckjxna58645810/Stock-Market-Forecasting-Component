@@ -49,7 +49,7 @@ with st.form("training_form"):
         t_force = st.checkbox("🔄 Force Tech Download", value=False)
         
     with d_col2:
-        st.write("** 🌍 Macro**")
+        st.write("**🌍 Macro**")
         m_save = st.checkbox("💾 Save Macro", value=True)
         m_force = st.checkbox("🔄 Force Macro Download", value=False)
         

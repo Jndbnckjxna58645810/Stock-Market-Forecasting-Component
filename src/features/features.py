@@ -60,11 +60,11 @@ def macd_hist(df):
 
 def rolling_max(df, window=10): return df["high"].rolling(window).max()
 
-def rolling_min(df, window=10): return df["low"].rolling(window).max()
+def rolling_min(df, window=10): return df["low"].rolling(window).min()
 
 def breakout_up(df): return (df["close"] > rolling_max(df)).astype(int)
 
-def breakout_down(df): return (df["close"] > rolling_min(df)).astype(int)
+def breakout_down(df): return (df["close"] < rolling_min(df)).astype(int)
 
 def log_return(df, n=1): return np.log(df["close"] / df["close"].shift(n))
 
