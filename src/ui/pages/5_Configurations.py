@@ -21,6 +21,30 @@ MACRO_OPTIONS = {
     "GDP": "GDP",
     "S&P 500 (VIX)": "VIXCLS"
 }
+DEFAULT_PARAMS = {
+    "xgb": {
+        "n_estimators": 300,
+        "max_depth": 4,
+        "learning_rate": 0.03
+    },
+    "rf": {
+        "n_estimators": 300,
+        "max_depth": 8
+    },
+    "lstm": {}
+}
+DEFAULT_HYPERPARAMETERS = {
+    "xgb": {},
+    "rf": {},
+    "lstm": {
+        "seq_len": 20,
+        "units": 64,
+        "epochs": 20,
+        "batch_size": 32,
+        "dropout": 0.2,
+        "learning_rate": 0.001
+    }
+}
 
 def get_default_config():
     """Returns a fresh ModelConfig instance with defaults."""
@@ -76,13 +100,23 @@ with col2:
 
     model_list = ["xgb", "rf", "lstm"]
 
-    current_model_name = draft.model.name
-    model_type = st.selectbox(
-        "Model Type", 
-        model_list, 
-        index=model_list.index(current_model_name) if current_model_name in model_list else 0
+    # current_model_name = draft.model.name
+    # model_type = st.selectbox(
+    #     "Model Type", 
+    #     model_list, 
+    #     index=model_list.index(current_model_name) if current_model_name in model_list else 0
+    # )
+    # draft.model.name = model_type
+    selected_model_type = st.selectbox(
+        "Model",
+        ["xgb", "rf", "lstm"],
+        index=["xgb", "rf", "lstm"].index(draft.model.name)
     )
-    draft.model.name = model_type
+
+    if selected_model_type != draft.model.name:
+        draft.model.name = selected_model_type
+        draft.model.params = DEFAULT_PARAMS[selected_model_type].copy()
+        draft.model.hyperparameters = DEFAULT_HYPERPARAMETERS[selected_model_type].copy()
 
     st.header("📈 Technical Features")
     with st.container(border=True):
@@ -164,17 +198,17 @@ with col2:
     m_p = draft.model.params
 
     with st.container(border=True):
-        if model_type == "xgb":
+        if selected_model_type == "xgb":
             m_p["n_estimators"] = st.number_input("🛠️ N Estimators", value=int(m_p.get("n_estimators", 100)))
             m_p["max_depth"] = st.slider("🛠️ Max Depth", 1, 15, int(m_p.get("max_depth", 3)))
             m_p["learning_rate"] = st.number_input("🛠️ Learning Rate", value=float(m_p.get("learning_rate", 0.1)))
-        elif model_type == "rf":
+        elif selected_model_type == "rf":
             m_p["n_estimators"] = st.number_input("🛠️ N Estimators", value=int(m_p.get("n_estimators", 100)))
             m_p["max_depth"] = st.slider("🛠️ Max Depth", 1, 30, int(m_p.get("max_depth", 10)))
-        elif model_type == "lstm":
+        elif selected_model_type == "lstm":
             st.info("⚙️ Configuration moves to Hyperparameters section below.")
 
-    if model_type == "lstm":
+    if selected_model_type == "lstm":
         st.subheader("⚙️ LSTM Hyperparameters")
         hp = draft.model.hyperparameters
         with st.container(border=True):

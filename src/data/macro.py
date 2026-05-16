@@ -20,6 +20,8 @@ def _fetch_single_series_with_retry(fred_client, source, start_date, end_date):
     return fred_client.get_series(source, start_date, end_date)
 
 def load_macro_by_parameters(macro_features, start_date, end_date):
+    if not macro_features: return pd.DataFrame()
+
     dfs, fred = [], get_fred()    
     for macro in macro_features:
         name, source = macro["name"], macro["source"]
