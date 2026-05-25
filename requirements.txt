@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+scikit-learn
+tensorflow
+xgboost
+matplotlib
+plotly
+yfinance
+fredapi
+joblib
+tenacity
+python-dotenv

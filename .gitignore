@@ -8,3 +8,4 @@
 /models/
 /logs/
 /my_project.egg-info/
+*.ipynb
