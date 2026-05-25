@@ -9,3 +9,5 @@
 /logs/
 /my_project.egg-info/
 *.ipynb
+*.log
+.ipynb_checkpoints/
